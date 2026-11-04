@@ -1,0 +1,21 @@
+[build]
+  publish = "."
+
+# Block private files on the static site (they belong to the Node backend only)
+[[redirects]]
+  from = "/server/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/database/*"
+  to = "/index.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.env"
+  to = "/index.html"
+  status = 404
+  force = true

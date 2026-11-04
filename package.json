@@ -1,0 +1,14 @@
+{
+  "name": "ashen-roads-online",
+  "version": "15.48.0",
+  "description": "Ashen Roads - browser zombie survival with online rooms",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node tools/test-auth.js && node tools/test-auth-remote.js && node tools/test-multiplayer.js && node tools/test-client-sim.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

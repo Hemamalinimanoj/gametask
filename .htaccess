@@ -1,0 +1,12 @@
+# Ashen Roads on Apache / LiteSpeed (Hostinger, cPanel, ...) - blocks private files, serves .glb correctly
+Options -Indexes
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(server|tools|database)(/|$) - [F,L]
+  RewriteRule (^|/)\.env - [F,L]
+  RewriteRule \.(sqlite|key|log)$ - [F,L]
+</IfModule>
+<IfModule mod_mime.c>
+  AddType model/gltf-binary .glb
+  AddType model/gltf+json .gltf
+</IfModule>

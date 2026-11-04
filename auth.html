@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ashen Roads — Login</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/auth.css?v=15.48">
+<script src="js/server-config.js?v=15.50"></script></head><body>
+<div class="glow"></div><div class="vig"></div>
+<main class="card">
+  <span class="badge">SURVIVOR REGISTRY</span>
+  <h1>ASHEN<span>ROADS</span></h1>
+  <p class="sub" id="sub">LOG IN TO SURVIVE</p>
+
+  <div class="tabs" role="tablist">
+    <button type="button" id="tLogin" class="on" role="tab">LOGIN</button>
+    <button type="button" id="tReg" role="tab">CREATE ACCOUNT</button>
+  </div>
+
+  <form id="f" autocomplete="on" novalidate>
+    <label for="u">USERNAME</label>
+    <input id="u" name="username" maxlength="14" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="e.g. Survivor_07">
+    <p class="hint hidden" id="uh">3-14 letters, numbers or _ . This is the name other players see.</p>
+
+    <label for="p">PASSWORD</label>
+    <div class="field">
+      <input id="p" name="password" type="password" maxlength="128" autocomplete="current-password" placeholder="Password">
+      <button type="button" class="eye" id="eye1">SHOW</button>
+    </div>
+    <p class="hint hidden" id="ph">At least 6 characters.</p>
+
+    <div id="cwrap" class="hidden">
+      <label for="p2">CONFIRM PASSWORD</label>
+      <div class="field"><input id="p2" type="password" maxlength="128" autocomplete="new-password" placeholder="Repeat password"></div>
+    </div>
+
+    <button type="submit" id="go">LOGIN</button>
+    <p id="msg" role="alert"></p>
+  </form>
+  <p class="foot" id="foot">New survivor? <a id="sw">Create an account</a></p>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id), KEY = 'ashenToken';
+let mode = 'login', busy = false;
+
+// Find the REAL game server (new version with /api). Tries this page's own address first, then ports 8000-8010 (the server moves on by itself when 8000 is busy).
+let API = null, probeOther = null;
+const isLan = /^(localhost|127\.|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.hostname || 'localhost');
+const h = location.hostname || 'localhost';
+async function probe() {
+  const config = window.ASHEN_CONFIG, configured = config && config.serverBase(), hasConfig = config && config.isConfigured();
+  if (hasConfig && !configured) return null;
+  const bases = configured ? [configured] : [];
+  if (!configured && /^https?:$/.test(location.protocol) && location.port !== '5500') bases.push(location.origin);
+  if (!hasConfig && (isLan || !bases.length)) {   // only when testing on your own PC / Wi-Fi: the local server may have moved to 8001-8010.
+    for (let pt = 8000; pt <= 8010; pt++) bases.push('http://' + h + ':' + pt);
+    if (h !== 'localhost') for (let pt = 8000; pt <= 8010; pt++) bases.push('http://localhost:' + pt);
+  }
+  const results = await Promise.all(bases.map(async b => {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), (!isLan && /^https:/.test(b)) ? 9000 : 1800);
+    try {
+      const r = await fetch(b + '/api/me', {signal: c.signal});
+      return {base: b, isApi: (r.headers.get('content-type') || '').includes('json')};   // only the NEW server answers /api/me with JSON
+    } catch (e) { return null; }
+    finally { clearTimeout(t); }
+  }));
+  const found = results.find(r => r && r.isApi);
+  probeOther = (results.find(r => r && !r.isApi) || {}).base || null;   // some other / old web server may be there
+  return found ? found.base : null;
+}
+let PHP = !(window.ASHEN_CONFIG && window.ASHEN_CONFIG.backend === 'node');
+let phpProblem = '';
+async function phpHealth() {   // is api/index.php really running PHP, with SQLite and a writable database folder?
+  const c = new AbortController(), t = setTimeout(() => c.abort(), 15000);
+  try {
+    const r = await fetch(window.ASHEN_CONFIG.apiUrl('/api/health'), {signal: c.signal, cache: 'no-store'});
+    const txt = await r.text(); let j = null; try { j = JSON.parse(txt); } catch (e) {}
+    if (!j || j.ok !== true) { phpProblem = /<\?php/.test(txt) ? 'source' : 'notphp'; return false; }
+    // v15.45: no pdo_sqlite is fine - api/index.php then stores accounts in database/ashen-*.json.php (j.storage === 'file')
+    if (!j.writable) { phpProblem = 'readonly'; return false; }
+    phpProblem = ''; API = 'php'; return true;
+  } catch (e) { phpProblem = 'unreachable'; return false; }
+  finally { clearTimeout(t); }
+}
+function phpDownMsg() {
+  const test = window.ASHEN_CONFIG.apiUrl('/api/health');
+  if (location.protocol === 'file:') return 'You opened this file directly. PHP needs a web server: run  php -S localhost:8000  inside the game folder (or use XAMPP), then open http://localhost:8000/auth.html';
+  if (phpProblem === 'source') return 'This website shows the PHP file instead of running it - PHP is not enabled here. Use a PHP host (or run  php -S localhost:8000  on your PC).';
+  if (phpProblem === 'nosqlite') return 'PHP is running, but its SQLite extension (pdo_sqlite) is missing. Enable pdo_sqlite in your hosting panel (PHP extensions).';
+  if (phpProblem === 'readonly') return 'The database folder is not writable. In your hosting file manager set the permission of the database/ folder to 775 (777 on some free hosts).';
+  if (phpProblem === 'notphp') {
+    if (location.hostname.endsWith('.netlify.app') && !String(window.ASHEN_API_URL || '').trim()) return 'Netlify cannot run PHP. Upload this whole folder to a PHP host (Hostinger, cPanel, InfinityFree ...), or set ASHEN_API_URL in js/server-config.js to the address of your PHP website, then redeploy.';
+    return 'The login backend did not answer. Check that the api/ folder is uploaded and PHP is on. Test link: ' + test + '  (it must show {"ok":true ...}).';
+  }
+  return 'Cannot reach the login server. Check your internet and the ASHEN_API_URL setting in js/server-config.js. Test link: ' + test;
+}
+async function findServer() {
+  if (PHP) {
+    if (await phpHealth()) return true;
+    // v15.50: PHP is not answering. If this is the Node game server (START-ONLINE.bat), use ITS login instead of staying stuck.
+    const nb = await probe();
+    if (!nb) return false;
+    PHP = false; window.ASHEN_BACKEND = 'node'; window.ASHEN_CONFIG.backend = 'node'; phpProblem = '';
+    if (nb !== location.origin && !(window.ASHEN_CONFIG && window.ASHEN_CONFIG.isConfigured())) { location.replace(nb + '/auth.html' + location.search); return 'redirect'; }
+    API = nb; stamp(); return true;
+  }
+  const b = await probe();
+  if (!b) return false;
+  if (b !== location.origin && !(window.ASHEN_CONFIG && window.ASHEN_CONFIG.isConfigured())) { location.replace(b + '/auth.html' + location.search); return 'redirect'; }   // opened from Live Server / file: -> continue on the game server itself (login is saved per address)
+  API = b; return true;
+}
+function serverDownMsg() {
+  if (PHP) return phpDownMsg();
+  if (window.ASHEN_CONFIG && window.ASHEN_CONFIG.error) return window.ASHEN_CONFIG.error + ' Fix js/server-config.js and reload.';
+  if (location.hostname.endsWith('.netlify.app') && !(window.ASHEN_CONFIG && window.ASHEN_CONFIG.isConfigured())) return 'Netlify serves the static game only. Set ASHEN_SERVER_URL in js/server-config.js to your Node backend HTTPS URL, then redeploy.';
+  if (!isLan && /^https?:$/.test(location.protocol) && !probeOther) return 'Server is waking up (free hosting can take up to a minute after it was idle). Please wait - this continues by itself.';
+  if (probeOther) return 'A server answers at ' + probeOther + ' but it is the OLD version (no login). Close its black window, then run START-ONLINE.bat from the NEW v15_37 folder.';
+  if (location.protocol === 'file:') return 'You opened this file directly. Run START-ONLINE.bat, then open http://localhost:8000 .';
+  if (location.port === '5500') return 'Live Server (5500) only serves the page; it does not run the login server. Open the Ashen Roads folder containing server\\server.js, double-click START-ONLINE.bat, and keep its window open. This page switches to the game server automatically once it is running.';
+  return 'Game server is not running. Double-click START-ONLINE.bat (needs Node.js) and keep the black window open. This page connects by itself.';
+}
+function stamp() {   // tiny diagnostic line: shows which version + login backend this page really runs
+  let e = document.getElementById('verStamp');
+  if (!e) { e = document.createElement('div'); e.id = 'verStamp'; e.style.cssText = 'text-align:center;font-size:11px;letter-spacing:1px;opacity:.45;margin-top:10px'; (document.querySelector('main.card') || document.body).appendChild(e); }
+  e.innerHTML = ''; const t = document.createElement('span'); t.textContent = 'v15.50 · login: ' + (PHP ? 'php' : 'node') + ' · ' + location.host + (PHP ? '' : ' · '); e.appendChild(t); if (!PHP) { const l = document.createElement('a'); l.href = (API || location.origin) + '/status'; l.target = '_blank'; l.textContent = 'status'; l.style.color = 'inherit'; e.appendChild(l); }
+}
+setTimeout(stamp, 300); setInterval(stamp, 4000);
+let _retry = null, _checking = false;
+function waitForServer() {   // keeps trying until the server is up
+  clearInterval(_retry);
+  _retry = setInterval(async () => { if (_checking) return; _checking = true; let r; try { r = await findServer(); } finally { _checking = false; } if (r === true) { clearInterval(_retry); say('Server connected.', 'ok'); setTimeout(() => say(''), 1500); initPage(); } else if (r === false) say(serverDownMsg() + ' Trying again…'); }, 3000);
+}
+const params = new URLSearchParams(location.search);
+const next = (() => { const n = params.get('next') || 'index.html'; return /^[A-Za-z0-9_.-]+(\?[^#]*)?$/.test(n) && !n.startsWith('auth.html') ? n : 'index.html'; })();   // only same-folder pages: no open redirect
+
+function say(t, cls) { const m = $('msg'); m.textContent = t || ''; m.className = cls || ''; }
+function setMode(m) {
+  mode = m; const reg = m === 'register';
+  $('tLogin').classList.toggle('on', !reg); $('tReg').classList.toggle('on', reg);
+  $('tLogin').disabled = false; $('tReg').disabled = false;
+  $('cwrap').classList.toggle('hidden', !reg);
+  $('u').disabled = false; $('p').closest('.field').classList.remove('hidden'); $('p').disabled = false;
+  $('p2').disabled = false; $('uh').classList.toggle('hidden', !reg); $('ph').classList.toggle('hidden', !reg);
+  $('go').textContent = reg ? 'CREATE ACCOUNT' : 'LOGIN';
+  $('p').autocomplete = reg ? 'new-password' : 'current-password';
+  $('foot').innerHTML = reg ? 'Already have an account? <a id="sw">Log in</a>' : 'New survivor? <a id="sw">Create an account</a>';
+  $('sw').onclick = () => setMode(reg ? 'login' : 'register');
+  $('sub').textContent = reg ? 'CREATE YOUR SURVIVOR' : 'LOG IN TO SURVIVE';
+  say(''); if (window.matchMedia && matchMedia('(pointer:fine)').matches) $('u').focus();   // phones: do not pop the keyboard open on load
+}
+$('tLogin').onclick = () => setMode('login'); $('tReg').onclick = () => setMode('register');
+$('eye1').onclick = () => { const t = $('p').type === 'password'; $('p').type = t ? 'text' : 'password'; $('p2').type = $('p').type; $('eye1').textContent = t ? 'HIDE' : 'SHOW'; };
+
+async function post(path, body) {
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 60000);   // a free host can take ~1 minute to wake up
+  const slow = setTimeout(() => say('Server is waking up… please wait.', 'wait'), 3500);
+  try {
+    const r = await fetch(PHP ? window.ASHEN_CONFIG.apiUrl('/api' + path.replace(/^\/api/, '')) : API + path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body), signal: ctl.signal});
+    let j = null; try { j = await r.json(); } catch (e) {}
+    return {status: r.status, j};
+  } finally { clearTimeout(to); clearTimeout(slow); }
+}
+
+$('f').addEventListener('submit', async (e) => {
+  e.preventDefault(); if (busy) return;
+  if (!API) { say('Connecting to the game server…', 'wait'); const r = await findServer(); if (r !== true) { if (r === false) { say(serverDownMsg()); waitForServer(); } return; } }
+  const username = $('u').value.trim(), password = $('p').value;
+  if (!username || !password) return say('Enter your username and password.');
+  if (mode === 'register') {
+    if (!/^[A-Za-z0-9_]{3,14}$/.test(username)) return say('Username must be 3-14 letters, numbers or _ (no spaces).');
+    if (password.length < 6) return say('Password must be at least 6 characters.');
+    if (password !== $('p2').value) return say('The two passwords do not match.');
+  }
+  busy = true; $('go').disabled = true; say(mode === 'register' ? 'Creating your account…' : 'Logging in…', 'wait');
+  try {
+    const {status, j} = await post(mode === 'register' ? '/api/register' : '/api/login', {username, password});
+    if (j && j.ok && j.token) {
+      try { localStorage.setItem(KEY, j.token); localStorage.setItem('ashenName', j.user.name); }
+      catch (err) { busy = false; $('go').disabled = false; return say('Your browser blocks saving the login (private mode?). Allow site storage and try again.'); }
+      try { localStorage.setItem('ashenSeen', '1'); } catch (err) {}
+      say(mode === 'register' ? 'Account created! Welcome, ' + j.user.name + '.' : 'Welcome back, ' + j.user.name + '.', 'ok');
+      setTimeout(() => location.replace(next), 500); return;
+    }
+    say((j && j.message) || (PHP ? (status === 404 || status === 403 ? 'The login API was not found (is the api/ folder uploaded?).' : 'The PHP server returned an error (' + status + '). Check the hosting error log, then try again.') : status === 404 || status === 405 || status === 501 ? 'This server has no login system (old version or wrong server). Run START-ONLINE.bat from the NEW v15_37 folder and open http://localhost:8000' : 'Something went wrong (' + status + ').'));
+  } catch (err) {
+    say(err && err.name === 'AbortError' ? 'The server took too long to answer. Try again.' : (API = null, serverDownMsg()));
+  }
+  busy = false; $('go').disabled = false;
+});
+
+// start: find the server, then skip this page if already logged in
+async function initPage() {
+  let t = ''; try { t = localStorage.getItem(KEY) || ''; } catch (e) {}
+  if (t) { try { const r = await fetch(PHP ? window.ASHEN_CONFIG.apiUrl('/api/me') : API + '/api/me', {headers: window.ASHEN_CONFIG.authHeaders(t), cache: 'no-store'}); if (r.ok) return location.replace(next); if (r.status === 401) localStorage.removeItem(KEY); } catch (e) {} }
+  try { const n = localStorage.getItem('ashenName'); if (n && !$('u').value) $('u').value = n; } catch (e) {}
+}
+(async () => {
+  let seen = ''; try { seen = localStorage.getItem('ashenSeen') || localStorage.getItem('ashenName') || ''; } catch (e) {}
+  setMode(params.get('mode') === 'login' ? 'login' : (params.get('mode') === 'register' || !seen) ? 'register' : 'login');   // first time on this device -> CREATE ACCOUNT first
+  say('Connecting to the game server…', 'wait');
+  const r = await findServer();
+  if (r === true) { say(''); initPage(); }
+  else if (r === false) { say(serverDownMsg() + ' Trying again…'); waitForServer(); }
+})();
+</script></body></html>

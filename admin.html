@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Ashen Roads — Admin</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="js/server-config.js"></script>
+</head>
+<body>
+  <main class="dashboard">
+    <header>
+      <a class="brand" href="index.html">ASHEN<span>ROADS</span></a>
+      <div class="headActions"><span id="adminName">ADMIN CONSOLE</span><a href="index.html">BACK TO GAME</a></div>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">SERVER CONTROL ROOM</p>
+      <h1>PLAYER ACTIVITY</h1>
+      <p>Live room presence, verified registrations and the all-time multiplayer leaderboard.</p>
+    </section>
+    <p id="status" role="status">Connecting to the game server…</p>
+    <section class="totals" aria-label="Server totals">
+      <article><span>REGISTERED PLAYERS</span><b id="totalRegistered">—</b></article>
+      <article><span>PLAYERS ONLINE</span><b id="totalOnline">—</b></article>
+      <article><span>ACTIVE ROOMS</span><b id="totalRooms">—</b></article>
+    </section>
+    <section class="panel">
+      <div class="sectionHead"><div><p class="eyebrow">TOP SURVIVORS</p><h2>TOP 5 PLAYERS</h2></div><span class="liveDot">LIVE</span></div>
+      <div class="tableWrap"><table><thead><tr><th>RANK</th><th>PLAYER</th><th>WINS</th><th>STATUS</th></tr></thead><tbody id="topRows"></tbody></table></div>
+    </section>
+    <section class="panel">
+      <div class="sectionHead"><div><p class="eyebrow">CURRENT SESSION</p><h2>ACTIVE ROOMS</h2></div></div>
+      <div id="roomList" class="roomList"></div>
+    </section>
+    <section class="panel">
+      <div class="sectionHead"><div><p class="eyebrow">ACCOUNT DIRECTORY</p><h2>REGISTERED PLAYERS</h2></div></div>
+      <div class="tableWrap"><table><thead><tr><th>PLAYER</th><th>EMAIL</th><th>REGISTERED</th><th>LAST LOGIN</th><th>LAST ACTIVITY</th><th>LOGINS</th><th>PLAY TIME</th><th>MATCHES</th><th>DEATHS</th><th>WINS</th></tr></thead><tbody id="playerRows"></tbody></table></div>
+      <p style="margin:12px 0 0"><button id="csvBtn" type="button" style="cursor:pointer;padding:10px 18px;background:#ffc65d;border:0;font:700 14px Rajdhani,sans-serif;letter-spacing:2px">DOWNLOAD PLAYERS (EXCEL / CSV)</button></p>
+    </section>
+    <section class="panel">
+      <div class="sectionHead"><div><p class="eyebrow">LATEST 100 EVENTS</p><h2>ACTIVITY LOG</h2></div></div>
+      <div class="tableWrap"><table><thead><tr><th>TIME</th><th>PLAYER</th><th>EVENT</th><th>DETAIL</th></tr></thead><tbody id="eventRows"></tbody></table></div>
+    </section>
+    <footer>Updates automatically every 8 seconds · Account details are visible only to the configured admin account.</footer>
+  </main>
+<script>
+'use strict';
+(function () {
+  const $ = id => document.getElementById(id);
+  const token = (() => { try { return localStorage.getItem('ashenToken') || ''; } catch (e) { return ''; } })();
+  const config = window.ASHEN_CONFIG;
+  const api = config && config.serverBase() || location.origin;
+  const url = p => config && config.backend === 'php' ? config.apiUrl(p) : api + p;
+  const hdr = () => config ? config.authHeaders(token) : {Authorization: 'Bearer ' + token};
+  if (!token) { location.replace('auth.html?next=admin.html'); return; }
+  function cell(row, value, cls) {
+    const td = document.createElement('td');
+    if (cls) td.className = cls;
+    td.textContent = value;
+    row.appendChild(td);
+    return td;
+  }
+  function date(value) {
+    if (!value) return '—';
+    return new Date(value).toLocaleString();
+  }
+  function activity(player) {
+    if (player.online && player.sessions.length) {
+      const s = player.sessions[0];
+      return 'ONLINE · ' + (s.phase || s.page) + ' · ROOM ' + s.room;
+    }
+    return player.lastActive ? date(player.lastActive) : 'Never';
+  }
+  function renderRows(id, players, top) {
+    const body = $(id);
+    body.replaceChildren();
+    if (!players.length) {
+      const row = document.createElement('tr'), td = document.createElement('td');
+      td.colSpan = top ? 4 : 10; td.className = 'empty'; td.textContent = 'No registered players yet.';
+      row.appendChild(td); body.appendChild(row); return;
+    }
+    players.forEach((p, index) => {
+      const row = document.createElement('tr');
+      if (top) {
+        cell(row, String(index + 1).padStart(2, '0'), 'rank');
+        cell(row, p.name, 'playerName');
+        cell(row, String(p.wins), 'wins');
+        cell(row, p.online ? 'ONLINE' : 'OFFLINE', p.online ? 'online' : 'offline');
+      } else {
+        cell(row, p.name, 'playerName'); cell(row, p.email || '—');
+        cell(row, date(p.created)); cell(row, date(p.lastLogin)); cell(row, activity(p)); cell(row, String(p.logins || 0));
+        cell(row, (p.playMinutes || 0) + ' min'); cell(row, String(p.matches || 0)); cell(row, String(p.deaths || 0)); cell(row, String(p.wins));
+      }
+      body.appendChild(row);
+    });
+  }
+  function renderEvents(list) {
+    const body = $('eventRows'); body.replaceChildren();
+    const label = {register: 'REGISTERED', login: 'LOGGED IN', join: 'JOINED', leave: 'LEFT', win: 'WON', death: 'DIED', login_failed: 'FAILED LOGIN'};
+    if (!list || !list.length) { const row = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 4; td.className = 'empty'; td.textContent = 'No activity recorded yet.'; row.appendChild(td); body.appendChild(row); return; }
+    list.forEach(e => { const row = document.createElement('tr'); cell(row, date(e.t)); cell(row, e.user, 'playerName'); cell(row, label[e.type] || String(e.type).toUpperCase()); cell(row, e.detail || '—'); body.appendChild(row); });
+  }
+  $('csvBtn').onclick = async () => {
+    try { const r = await fetch(url('/api/admin/export.csv'), {headers: hdr()}); if (!r.ok) throw new Error(); const b = await r.blob(), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ashen-roads-players.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+    catch (e) { $('status').textContent = 'Could not download the player file.'; $('status').className = 'error'; }
+  };
+  function renderRooms(rooms) {
+    const list = $('roomList');
+    list.replaceChildren();
+    if (!rooms.length) {
+      const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No active rooms right now.'; list.appendChild(p); return;
+    }
+    rooms.forEach(room => {
+      const article = document.createElement('article'); article.className = 'room';
+      const title = document.createElement('div'); title.className = 'roomTitle';
+      const name = document.createElement('b'); name.textContent = room.code;
+      const phase = document.createElement('span'); phase.textContent = room.phase.toUpperCase();
+      title.append(name, phase);
+      const people = document.createElement('p');
+      people.textContent = room.players.map(p => p.name + (p.dead ? ' (eliminated)' : '') + ' · ' + p.page).join('  /  ');
+      article.append(title, people); list.appendChild(article);
+    });
+  }
+  async function refresh() {
+    try {
+      const r = await fetch(url('/api/admin/overview'), {headers: hdr(), cache: 'no-store'});
+      const j = await r.json();
+      if (r.status === 401) { location.replace('auth.html?next=admin.html'); return; }
+      if (!r.ok || !j.ok) { $('status').textContent = j.message || 'Admin access is not enabled for this account.'; $('status').className = 'error'; return; }
+      $('status').textContent = 'Live data refreshed ' + new Date().toLocaleTimeString();
+      $('status').className = 'good';
+      $('adminName').textContent = 'SIGNED IN · ADMIN';
+      $('totalRegistered').textContent = j.totals.registered;
+      $('totalOnline').textContent = j.totals.online;
+      $('totalRooms').textContent = j.totals.rooms;
+      renderRows('topRows', j.topPlayers, true);
+      renderRooms(j.rooms);
+      renderRows('playerRows', j.registeredPlayers, false);
+      renderEvents(j.events);
+    } catch (e) {
+      $('status').textContent = 'Cannot reach the game server. Check your connection and backend URL.';
+      $('status').className = 'error';
+    }
+  }
+  refresh();
+  setInterval(refresh, 8000);
+})();
+</script>
+</body>
+</html>

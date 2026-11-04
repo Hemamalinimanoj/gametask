@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Ashen Roads - Rank List</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="js/server-config.js"></script>
+</head>
+<body>
+  <main class="dashboard">
+    <header>
+      <a class="brand" href="index.html">ASHEN <span>ROADS</span></a>
+      <nav class="headActions"><a href="index.html">BACK TO GAME</a></nav>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">ALL SURVIVORS</p>
+      <h1>RANK LIST</h1>
+      <p>The best survivors, ranked by wins. Everyone can see this page.</p>
+      <div id="status">Loading...</div>
+    </section>
+    <section class="panel">
+      <div class="sectionHead"><div><p class="eyebrow">TOP 50</p><h2>LEADERBOARD</h2></div><span class="liveDot">LIVE</span></div>
+      <div class="tableWrap"><table>
+        <thead><tr><th>RANK</th><th>PLAYER</th><th>WINS</th><th>MATCHES</th><th>DEATHS</th><th>PLAY TIME</th><th>STATUS</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+    </section>
+    <footer>Updates every 15 seconds</footer>
+  </main>
+<script>
+(function () {
+  var rows = document.getElementById('rows'), status = document.getElementById('status');
+  function cell(tr, text, cls) { var td = document.createElement('td'); if (cls) td.className = cls; td.textContent = text; tr.appendChild(td); return td; }
+  function render(list) {
+    rows.textContent = '';
+    if (!list.length) { var tr0 = document.createElement('tr'), td0 = document.createElement('td'); td0.colSpan = 7; td0.className = 'empty'; td0.textContent = 'No players yet.'; tr0.appendChild(td0); rows.appendChild(tr0); return; }
+    list.forEach(function (p, i) {
+      var tr = document.createElement('tr'), medal = i === 0 ? '\uD83E\uDD47 ' : i === 1 ? '\uD83E\uDD48 ' : i === 2 ? '\uD83E\uDD49 ' : '';
+      cell(tr, medal + '#' + (i + 1), 'rank'); cell(tr, p.name, 'playerName'); cell(tr, String(p.wins), 'wins');
+      cell(tr, String(p.matches)); cell(tr, String(p.deaths)); cell(tr, p.playMinutes + ' min');
+      cell(tr, p.online ? 'ONLINE' : 'OFFLINE', p.online ? 'online' : 'offline');
+      rows.appendChild(tr);
+    });
+  }
+  function load() {
+    fetch(window.ASHEN_CONFIG.apiUrl('/api/leaderboard'), {cache: 'no-store'})
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var j = null; try { j = JSON.parse(t); } catch (e) {}
+        if (!j || !j.ok) throw new Error('bad');
+        render(j.players); status.className = 'good'; status.textContent = j.total + ' registered survivors';
+      })
+      .catch(function () { status.className = 'error'; status.textContent = 'Could not load the rank list. Is the PHP backend running?'; });
+  }
+  load(); setInterval(load, 15000);
+})();
+</script>
+</body>
+</html>

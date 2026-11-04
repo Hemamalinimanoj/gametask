@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--meta tags-->
+<meta charset="UTF-8">
+<script src="js/server-config.js?v=15.50"></script>
+<script src="js/auth-client.js?v=15.50"></script><!-- login gate: no account/token -> auth.html -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Ashen Roads — Zombie Survival</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/menu.css">
+</head>
+<body>
+  <!-- start of the Asset loading screen -->
+  <div id="loadingScreen" role="status" aria-live="polite">
+    <div id="loadingContent">
+      <div id="loadingTrack" role="progressbar" aria-label="Loading game assets" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="loadingFill"></div>
+      </div>
+      <div id="loadingLabel">LOADING....0%</div>
+    </div>
+  </div>
+  <!-- end of the Asset loading screen -->
+<!-- start of the Three.js dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<!-- end of the Three.js dependencies -->
+<!-- start of the Main menu and player instructions -->
+<div id="startScreen" class="menu">
+    <canvas id="menuFx" aria-hidden="true"></canvas>
+    <div class="menuGlow" aria-hidden="true"></div>
+    <div class="menuVignette" aria-hidden="true"></div>
+
+    <button id="rulesBtn" class="rulesIcon" type="button" aria-label="Rules and controls" title="Rules &amp; controls (H / ?)">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5"/><circle cx="12" cy="18" r=".6" fill="currentColor"/></svg>
+      <span>RULES</span>
+    </button>
+
+    <div id="menuCharacter" aria-label="Your survivor character">
+      <canvas id="menuCharacterCanvas" aria-hidden="true"></canvas>
+      <div class="menuCharacterCaption"><span>YOUR SURVIVOR</span><strong id="menuCharacterName">READY FOR THE NIGHT</strong></div>
+    </div>
+
+    <div class="menuCol">
+      <div class="menuBadge">SURVIVAL · ZOMBIES · CO-OP</div>
+      <h1>ASHEN<span>ROADS</span></h1>
+      <h2>A LONE SURVIVOR. A LOYAL DOG. A DEAD CITY.</h2>
+
+      <button id="startBtn" type="button"><b>PLAY</b><small>PRESS <kbd>ENTER</kbd> TO PLAY</small></button>
+
+      <button id="rulesBtn2" class="ghostBtn" type="button">📖 HOW TO PLAY · KEYS · MAP COLOURS</button>
+    </div>
+
+    <div class="menuFoot">Survive the night. That's the whole plan.</div>
+
+    <!-- Rules panel -->
+    <div id="rulesModal" class="hidden" role="dialog" aria-modal="true" aria-label="Rules and controls">
+      <div class="rulesCard">
+        <button id="rulesClose" class="rulesX" type="button" aria-label="Close rules">✕</button>
+        <h3>RULES &amp; CONTROLS</h3>
+        <div class="rtabs">
+          <button type="button" class="on" data-t="play">HOW TO PLAY</button>
+          <button type="button" data-t="keys">KEYS</button>
+          <button type="button" data-t="map">MAP COLOURS</button>
+        </div>
+
+        <section data-p="play">
+          <ul class="rlist">
+            <li><b>Goal:</b> survive the night in the ruined city. Fight the infected, stay alive, stay inside the <span class="c" style="--c:#3d8bff">blue zone</span>.</li>
+            <li><b>Keep walking</b> — the dead only show up while you move (never more than 5 at once).</li>
+            <li><b>Loot:</b> gather wood &amp; scrap along the roads — follow the glowing beams. Grab armor vests + ammo, run to the air drop.</li>
+            <li><b>Rex the dog</b> barks when the dead are close. He only nips at zombies — you do the real damage.</li>
+            <li><b>Weapons:</b> rifle (starts with 60 bullets), steel pipe / club, and one <span class="c" style="--c:#d35bff">machine gun</span> hidden on the map.</li>
+            <li><b>Medkit</b> heals you. <b>Stamina</b> drains when you run — rest to refill.</li>
+            <li><b>Multiplayer:</b> create a room, share the code, everybody presses READY and the match starts together.</li>
+            <li class="mobileOnlyHint"><b>Phone:</b> left stick = move (push to the edge to run), drag anywhere to look, round buttons on the right = fire / reload / switch / medkit / crouch.</li>
+          </ul>
+        </section>
+
+        <section data-p="keys" class="hidden">
+          <div class="kgrid">
+            <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Move</span></div>
+            <div><kbd>Shift</kbd><span>Run</span></div>
+            <div><kbd>B</kbd> / <kbd>Ctrl</kbd><span>Crouch</span></div>
+            <div><kbd>Mouse</kbd><span>Look around</span></div>
+            <div><kbd>Left Click</kbd><span>Attack / shoot (hold)</span></div>
+            <div><kbd>R</kbd><span>Reload</span></div>
+            <div><kbd>Q</kbd><span>Switch weapon</span></div>
+            <div><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd><span>Rifle · Club · Machine gun</span></div>
+            <div><kbd>E</kbd><span>Use medkit</span></div>
+            <div><kbd>F</kbd><span>Enter / exit car</span></div>
+            <div><kbd>Tab</kbd> / <kbd>L</kbd><span>Big map</span></div>
+            <div><kbd>X</kbd><span>Turn around</span></div>
+            <div><kbd>Z</kbd> / <kbd>C</kbd><span>Turn left / right</span></div>
+            <div><kbd>V</kbd><span>Aim assist on / off</span></div>
+            <div><kbd>P</kbd> / <kbd>Esc</kbd><span>Pause</span></div>
+            <div><kbd>M</kbd><span>Mute</span></div>
+            <div><kbd>H</kbd><span>Rain on / off</span></div>
+            <div><kbd>K</kbd><span>Sun / Dark / Auto theme</span></div>
+            <div><kbd>Enter</kbd><span>Chat (in game)</span></div>
+            <div><kbd>Y</kbd> · <kbd>N</kbd><span>Reply · Mic on / off</span></div>
+            <div><kbd>F1</kbd> / <kbd>?</kbd><span>Key list in game</span></div>
+          </div>
+        </section>
+
+        <section data-p="map" class="hidden">
+          <p class="rnote">Press <kbd>Tab</kbd> or <kbd>L</kbd> in game for the big map. The small round map shows the same colours.</p>
+          <div class="lgrid">
+            <div><i class="dot" style="--c:#ff4a2e"></i><b>Red</b> — zombies (enemies)</div>
+            <div><i class="dot" style="--c:#ffb02e"></i><b>Orange</b> — infected creatures (snake, spider, rat…)</div>
+            <div><i class="dot" style="--c:#d35bff"></i><b>Purple</b> — machine gun</div>
+            <div><i class="dot" style="--c:#63b6ff"></i><b>Light blue dot</b> — Rex, your dog</div>
+            <div><i class="sq" style="--c:#7fe07f"></i><b>Green square</b> — car (press F near it)</div>
+            <div><i class="sq" style="--c:#ff4020"></i><b>Red-orange square</b> — air drop crate</div>
+            <div><i class="ring" style="--c:#3d8bff"></i><b>Blue circle</b> — safe zone (stay inside!)</div>
+            <div><i class="dot" style="--c:#4a90e2"></i><b>Blue pickup</b> — armor vest</div>
+            <div><i class="dot" style="--c:#e0b040"></i><b>Yellow pickup</b> — ammo</div>
+            <div><i class="dot" style="--c:#3be37a"></i><b>Green pickup</b> — stamina</div>
+            <div><i class="dot" style="--c:#e05a5a"></i><b>Pink-red pickup</b> — medkit / health</div>
+            <div><i class="dot" style="--c:#6b5a44"></i><b>Brown dot</b> — wood &amp; scrap</div>
+            <div><i class="tri" style="--c:#e8b84b"></i><b>Gold arrow</b> — YOU</div>
+            <div><i class="tri" style="--c:#c8a0ff"></i><b>Other coloured arrows</b> — your friends (multiplayer)</div>
+          </div>
+        </section>
+
+        <div class="rfoot">Press <kbd>Esc</kbd> or click outside to close · <kbd>Enter</kbd> to play</div>
+      </div>
+    </div>
+  </div>
+<!-- end of the Main menu and player instructions -->
+  <!-- start of the End-of-game overlay -->
+  <div id="gameOverScreen" class="hidden">
+    <canvas id="winConfetti" aria-hidden="true"></canvas>
+    <div class="gameOverCard">
+      <div class="winRays" aria-hidden="true"></div>
+      <div class="gameOverEmblem" aria-hidden="true">★</div>
+      <p id="gameOverKicker">SURVIVOR REPORT</p>
+      <h1>YOU DIED</h1>
+      <p id="gameOverCaption">The city took another one.</p>
+      <div id="gameOverRank" class="hidden"></div>
+      <div id="gameOverStats"></div>
+      <button id="restartBtn">TRY AGAIN</button>
+    </div>
+  </div>
+  <!-- end of the End-of-game overlay -->
+  <!-- start of the Pause overlay -->
+  <div id="pauseScreen" class="hidden">
+    <h1>PAUSED</h1>
+    <p>Click anywhere to resume</p>
+  </div>
+  <!-- end of the Pause overlay -->
+  <!-- start of the In-game HUD -->
+  <div id="hud" class="hidden">
+    <div id="damageFlash"></div>
+    <div id="bloodScreen"></div>
+    <div id="crosshair"></div>
+    <canvas id="minimap" width="180" height="180"></canvas>
+    <div id="statsPanel">
+      <div class="statItem"><span class="icon"><svg viewBox="0 0 48 48" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M24 4C14 4 7 11 7 20c0 6 3 10 7 12v6h5v-3h3v3h4v-3h3v3h5v-6c4-2 7-6 7-12C41 11 34 4 24 4zm-8 20a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm16 0a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/></svg></span><span id="killCount">0</span></div>
+    </div>
+    <div id="topLeftPanel">
+      <div class="barLabel"><span>Health</span><span id="hpText">100</span></div>
+      <div class="barOuter"><div class="barInner" id="hpBar" style="width:100%"></div></div>
+      <div class="barLabel"><span>Stamina</span><span id="stamText">100</span></div>
+      <div class="barOuter"><div class="barInner" id="stamBar" style="width:100%"></div></div>
+      <div id="inventoryPanel">
+        <div class="invItem"><span class="icon"><svg viewBox="0 0 48 48" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M28 3L10 27h11l-3 18 20-26H27z"/></svg></span><span id="ammoCount">0</span></div>
+        <div class="invItem"><span class="icon"><svg viewBox="0 0 48 48" width="1em" height="1em" fill="currentColor" aria-hidden="true"><rect x="5" y="14" width="38" height="12" rx="6"/><rect x="5" y="28" width="38" height="12" rx="6" opacity=".8"/><circle cx="11" cy="20" r="3.2" fill="#fff" opacity=".55"/><circle cx="11" cy="34" r="3.2" fill="#fff" opacity=".55"/></svg></span><span id="woodCount">0</span></div>
+      </div>
+    </div>
+    <div id="objectiveBanner"><span class="label">OBJECTIVE</span><span id="objectiveText">Loading...</span></div>
+    <div id="barkAlert">🐾 Rex is barking — the dead are near!</div>
+    <div id="toast"></div>
+    <div id="weaponHint">Weapon: Steel Pipe</div>
+    <div id="controlsHint">WASD move · Shift run · Click/hold to attack · Q / wheel / 1-2 switch weapon · 3 or G machine gun · Tab or L map · E medkit · P pause · M mute · H rain · K theme · F1 all keys</div>
+    <div id="touchControls" aria-label="Touch controls">
+      <div id="movePad" class="touchPad">
+        <div id="joystickZone" aria-label="Move (drag — push to edge to run)">
+          <div id="joystickStick"></div>
+        </div>
+      </div>
+      <div id="lookPad" class="touchPad">
+        <div id="lookZone" aria-label="Camera (drag to look around)">
+          <div id="lookStick"></div>
+        </div>
+        <div id="actionPad">
+        <button id="attackBtn" class="touchAction">ATK</button>
+        <button id="switchBtn" class="touchAction">SWITCH</button>
+        <button id="medkitBtn" class="touchAction">MED</button>
+        <button id="pauseBtn" class="touchAction mobileUtility">PAUSE</button>
+        <button id="themeBtn" class="touchAction mobileUtility">AUTO</button>
+        <button id="exitBtn" class="touchAction mobileUtility">EXIT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- end of the In-game HUD -->
+<!-- start of the Game rig and main logic scripts -->
+<script src="js/rigs/dogRig.js"></script>
+<script src="js/rigs/soldierRig.js"></script>
+<script src="js/main.js"></script>
+<script src="js/menu-character.js"></script>
+<!-- end of the Game rig and main logic scripts -->
+<script>
+/* lobby hand-off: lobby.html redirects here with ?autoplay=online|solo&room=CODE&name=NAME
+   Waits until the loading screen is really gone (NOTE: #loadingScreen is position:fixed, so offsetParent is ALWAYS null - check the 'hidden' class instead). */
+(function(){var m=location.search.match(/autoplay=(\w+)/);if(!m)return;var q=new URLSearchParams(location.search),n=0,t=setInterval(function(){
+  var ls=document.getElementById('loadingScreen'),b=document.getElementById(m[1]==='online'?'onlineBtn':'startBtn'),loaded=!ls||ls.classList.contains('hidden');
+  if((b&&loaded)||n++>1600){clearInterval(t);if(b){
+    if(m[1]==='online'){var nm=document.getElementById('mpName'),rm=document.getElementById('mpRoom');
+      var st=function(k){try{return sessionStorage.getItem(k)||localStorage.getItem(k)||''}catch(e){return ''}};
+      if(nm)nm.value=q.get('name')||st('ashenName')||'Survivor';
+      if(rm)rm.value=(q.get('room')||st('ashenRoom')||'').toUpperCase();}
+    b.dispatchEvent(new Event('pointerdown'));}}},150);})();
+</script>
+
+<script>
+/* menu: ENTER = play, rules panel, embers */
+(function(){
+  var $=function(i){return document.getElementById(i)},ss=$('startScreen'),modal=$('rulesModal');
+  if(!ss||!modal)return;
+  function openRules(v){modal.classList.toggle('hidden',!v);if(v)tab('play')}
+  function tab(t){modal.querySelectorAll('.rtabs button').forEach(function(b){b.classList.toggle('on',b.dataset.t===t)});
+    modal.querySelectorAll('section').forEach(function(x){x.classList.toggle('hidden',x.dataset.p!==t)})}
+  $('rulesBtn').addEventListener('click',function(){openRules(true)});
+  $('rulesBtn2').addEventListener('click',function(){openRules(true)});
+  $('rulesClose').addEventListener('click',function(){openRules(false)});
+  modal.addEventListener('click',function(e){if(e.target===modal)openRules(false)});
+  modal.querySelectorAll('.rtabs button').forEach(function(b){b.addEventListener('click',function(){tab(b.dataset.t)})});
+  function menuOpen(){var ls=$('loadingScreen');return !ss.classList.contains('hidden')&&(!ls||ls.classList.contains('hidden'))}
+  window.addEventListener('keydown',function(e){
+    if(!menuOpen())return;
+    var tg=e.target&&e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT')return;
+    var rulesOn=!modal.classList.contains('hidden');
+    if(e.key==='Escape'&&rulesOn){e.preventDefault();openRules(false);return}
+    if(e.key==='Enter'&&!e.repeat){e.preventDefault();if(rulesOn)openRules(false);var b=$('startBtn');if(b)b.dispatchEvent(new Event('pointerdown'))}
+    else if((e.key==='?'||e.key==='h'||e.key==='H'||e.key==='F1')&&!e.repeat){e.preventDefault();openRules(!rulesOn)}
+  },true);
+  /* embers */
+  var cv=$('menuFx'),g=cv.getContext('2d'),W=0,H=0,P=[],raf=0;
+  function size(){W=cv.width=ss.clientWidth;H=cv.height=ss.clientHeight}
+  function mk(init){return{x:Math.random()*W,y:init?Math.random()*H:H+10,r:Math.random()*2+.6,v:Math.random()*.7+.25,d:Math.random()*2-1,a:Math.random()*.7+.2}}
+  size();addEventListener('resize',size);for(var i=0;i<70;i++)P.push(mk(true));
+  (function f(){if(ss.classList.contains('hidden')){return}raf=requestAnimationFrame(f);g.clearRect(0,0,W,H);
+    for(var i=0;i<P.length;i++){var p=P[i];p.y-=p.v;p.x+=p.d*.35+Math.sin(p.y*.02)*.3;p.a-=.0007;if(p.y<-10||p.a<=0)P[i]=mk(false);
+      g.beginPath();g.fillStyle='rgba(255,'+(110+p.r*30|0)+',40,'+p.a.toFixed(2)+')';g.shadowColor='#ff6a20';g.shadowBlur=8;g.arc(p.x,p.y,p.r,0,6.3);g.fill()}})();
+})();
+</script>
+</body>
+</html>

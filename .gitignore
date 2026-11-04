@@ -1,0 +1,8 @@
+/server/data/*
+!/server/data/.gitkeep
+/database/*
+!/database/README.txt
+.env
+node_modules/
+/api/config.php
+/database/*.sqlite*
