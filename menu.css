@@ -1,0 +1,115 @@
+/* ===== Ashen Roads – front page / main menu (v15.36) ===== */
+#startScreen.menu{
+  background:
+    radial-gradient(ellipse 70% 55% at 30% 105%, rgba(255,70,30,.28), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 85% 0%, rgba(60,110,160,.22), transparent 70%),
+    linear-gradient(180deg,#0b0d10 0%,#12161a 55%,#1a1210 100%);
+  color:#e9e6df; justify-content:flex-end; align-items:center; text-align:left;
+  padding:clamp(18px,5vh,56px) clamp(36px,10vw,150px); overflow:hidden; font-family:'Rajdhani','Segoe UI',Arial,sans-serif;
+}
+#startScreen.menu > :first-child,#startScreen.menu > :last-child{margin:0}
+#menuFx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.menuGlow{position:absolute;inset:auto -10% -35% -10%;height:70%;background:radial-gradient(ellipse at 50% 100%,rgba(255,90,30,.35),transparent 65%);animation:menuFlicker 3.2s ease-in-out infinite;pointer-events:none;z-index:0}
+.menuVignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.75) 100%);pointer-events:none;z-index:0}
+@keyframes menuFlicker{0%,100%{opacity:.75}45%{opacity:1}60%{opacity:.6}80%{opacity:.95}}
+
+.menuCol{position:relative;z-index:2;width:min(460px,42vw);max-height:100%;overflow-y:auto;overflow-x:hidden;padding:4px 6px 4px 2px;margin-left:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+#menuCharacter{position:absolute;left:clamp(12px,4vw,64px);bottom:0;width:min(52vw,700px);height:92%;z-index:1;pointer-events:none}
+#menuCharacterCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.menuCharacterCaption{position:absolute;left:16%;bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:2px;color:#d4d7d2;text-shadow:0 2px 8px #000;letter-spacing:3px}
+.menuCharacterCaption span{color:#ffb347;font-size:11px;font-weight:700}
+.menuCharacterCaption strong{font-size:13px;font-weight:600;letter-spacing:2px}
+.menuBadge{display:inline-block;font-size:12px;letter-spacing:4px;font-weight:700;color:#ffb347;border:1px solid rgba(255,179,71,.4);background:rgba(255,179,71,.08);padding:5px 12px;border-radius:2px;margin-bottom:14px}
+#startScreen.menu h1{font-family:'Rajdhani','Segoe UI',Arial,sans-serif;display:flex;flex-direction:column;line-height:.92;margin:0 0 10px;font-size:clamp(44px,9vw,92px);letter-spacing:6px;font-weight:700;color:#f2efe8;text-shadow:0 0 28px rgba(255,80,40,.35),0 3px 0 rgba(0,0,0,.6)}
+#startScreen.menu h1 span{color:#ff5a36;text-shadow:0 0 22px rgba(255,70,30,.75),0 0 60px rgba(255,70,30,.35)}
+#startScreen.menu h2{font-weight:600;color:#9aa4a0;margin:0 0 26px;letter-spacing:3px;font-size:clamp(11px,1.5vw,14px)}
+
+/* PLAY button */
+#startScreen #startBtn{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;
+  background:linear-gradient(180deg,#ffd23f 0%,#f0a30a 100%);color:#17130a;border:0;border-radius:3px;padding:16px 24px 12px;cursor:pointer;
+  clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));
+  box-shadow:none;transition:transform .15s ease,filter .15s ease;animation:playPulse 2.2s ease-in-out infinite;font-family:inherit;
+}
+#startScreen #startBtn b{font-size:40px;letter-spacing:8px;line-height:1;font-weight:700;color:#17130a}
+#startScreen #startBtn small{font-size:12px;letter-spacing:3px;font-weight:700;opacity:.8}
+#startScreen #startBtn kbd{background:#17130a;color:#ffd23f;border-radius:3px;padding:1px 7px;font-weight:700;font-size:11px;letter-spacing:2px;animation:kbdBlink 1.1s steps(2,jump-none) infinite}
+#startScreen #startBtn:hover,#startScreen #startBtn:focus-visible{transform:translateY(-2px) scale(1.015);filter:brightness(1.08);outline:none}
+@keyframes playPulse{0%,100%{filter:drop-shadow(0 0 10px rgba(255,190,40,.35))}50%{filter:drop-shadow(0 0 22px rgba(255,190,40,.75))}}
+@keyframes kbdBlink{0%{opacity:1}100%{opacity:.45}}
+
+.ghostBtn{margin-top:10px;width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.18);color:#d7d4cc;font:700 13px 'Rajdhani','Segoe UI',sans-serif;letter-spacing:2px;padding:12px 14px;border-radius:3px;cursor:pointer;transition:background .15s,border-color .15s}
+.ghostBtn:hover{background:rgba(255,179,71,.12);border-color:rgba(255,179,71,.6);color:#fff}
+
+/* top-right rules icon */
+.rulesIcon{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:calc(18px + env(safe-area-inset-right,0px));z-index:5;display:flex;align-items:center;gap:8px;
+  background:rgba(10,12,14,.7);backdrop-filter:blur(6px);border:1px solid rgba(255,179,71,.55);color:#ffcf6a;border-radius:999px;padding:9px 16px 9px 12px;font:700 13px 'Rajdhani','Segoe UI',sans-serif;letter-spacing:3px;cursor:pointer;transition:transform .15s,background .15s;box-shadow:0 0 18px rgba(255,150,30,.18)}
+.rulesIcon:hover{transform:scale(1.06);background:rgba(255,179,71,.16)}
+.rulesIcon svg{flex:none}
+.menuFoot{position:absolute;right:clamp(36px,10vw,150px);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:2;font-size:12px;letter-spacing:3px;color:#6f7773}
+
+/* multiplayer box injected by main.js – restyle for dark */
+#startScreen.menu #onlineBox{margin-top:14px;padding:14px;gap:8px;justify-content:flex-start;background:rgba(10,12,14,.62);border:1px solid rgba(255,255,255,.1);border-radius:4px;backdrop-filter:blur(4px)}
+#startScreen.menu #onlineBox > div:first-child{color:#ffb347!important;letter-spacing:4px!important}
+#startScreen.menu #onlineBox input{background:#0c0e10!important;border:1px solid #3a4246!important;color:#f0ede6!important;border-radius:3px!important;font-family:inherit}
+#startScreen.menu #onlineBox input:focus{outline:none;border-color:#ffb347!important;box-shadow:0 0 0 2px rgba(255,179,71,.2)}
+#startScreen.menu #onlineBox button{border:0!important;border-radius:3px!important;color:#fff!important;font:700 14px 'Rajdhani','Segoe UI',sans-serif!important;letter-spacing:2px!important;cursor:pointer;box-shadow:none!important;padding:0 16px!important;clip-path:none!important;animation:none!important}
+#startScreen.menu #onlineBox button:hover{filter:brightness(1.15);transform:none!important}
+#startScreen.menu #onlineMsg{color:#ff8a6a!important}
+
+/* ===== rules panel ===== */
+#rulesModal{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.78);backdrop-filter:blur(5px);padding:14px}
+#rulesModal.hidden{display:none!important}
+.rulesCard{position:relative;width:min(760px,100%);max-height:min(88vh,640px);overflow-y:auto;background:linear-gradient(180deg,#171b1f,#101316);border:1px solid rgba(255,179,71,.35);border-radius:6px;padding:22px 26px 16px;box-shadow:0 20px 70px rgba(0,0,0,.7),0 0 40px rgba(255,120,30,.12);color:#dcd9d1;text-align:left;font-family:'Rajdhani','Segoe UI',sans-serif;animation:rulesIn .18s ease-out}
+@keyframes rulesIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.rulesCard h3{margin:0 0 12px;font-size:26px;letter-spacing:6px;color:#ffcf6a;font-weight:700}
+.rulesX{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);color:#fff;font-size:16px;cursor:pointer}
+.rulesX:hover{background:#c0392b;border-color:#c0392b}
+.rtabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.1);flex-wrap:wrap}
+.rtabs button{background:none;border:0;border-bottom:3px solid transparent;color:#8d9692;font:700 14px 'Rajdhani','Segoe UI',sans-serif;letter-spacing:2px;padding:8px 12px;cursor:pointer}
+.rtabs button.on{color:#ffcf6a;border-bottom-color:#ffb347}
+.rtabs button:hover{color:#fff}
+.rulesCard section.hidden{display:none!important}
+.rlist{margin:0;padding:0;list-style:none}
+.rlist li{padding:8px 0 8px 18px;position:relative;font-size:16px;line-height:1.45;border-bottom:1px dashed rgba(255,255,255,.07)}
+.rlist li::before{content:'';position:absolute;left:0;top:16px;width:7px;height:7px;background:#ff5a36;transform:rotate(45deg)}
+.rlist b{color:#ffcf6a}
+.rlist .c{color:var(--c);font-weight:700}
+.kgrid,.lgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px}
+.kgrid>div,.lgrid>div{display:flex;align-items:center;gap:6px;font-size:15px;min-height:34px;background:rgba(255,255,255,.035);border-radius:3px;padding:4px 10px}
+.kgrid>div span{margin-left:auto;color:#aab3ae;text-align:right;font-size:14px}
+.rulesCard kbd,.rnote kbd,.rfoot kbd{display:inline-block;min-width:24px;text-align:center;background:#232a2f;border:1px solid #46525a;border-bottom-width:3px;border-radius:4px;color:#ffe3a1;padding:0 7px;font:700 13px/22px 'Rajdhani',monospace}
+.rnote{margin:0 0 12px;color:#aab3ae;font-size:15px}
+.lgrid>div{font-size:15px;line-height:1.3}
+.lgrid b{color:#fff}
+.lgrid i{flex:none;width:16px;height:16px;display:inline-block;background:var(--c);box-shadow:0 0 8px var(--c);margin-right:4px}
+.lgrid i.dot{border-radius:50%}
+.lgrid i.sq{border-radius:2px}
+.lgrid i.ring{border-radius:50%;background:transparent;border:3px solid var(--c)}
+.lgrid i.tri{background:var(--c);clip-path:polygon(50% 0,100% 100%,0 100%);box-shadow:none}
+.rfoot{margin-top:14px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);font-size:13px;color:#7d8682;letter-spacing:1px;text-align:center}
+.mobileOnlyHint{display:none}
+@media (pointer:coarse){.mobileOnlyHint{display:block}}
+
+@media (max-width:760px){
+  #startScreen.menu{padding:78px 18px 46px;align-items:center;justify-content:center}
+  .menuCol{width:min(440px,100%)}
+  #menuCharacter{left:-8vw;width:74vw;height:56%;opacity:.62}
+  .menuCharacterCaption{left:18%;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  .menuCharacterCaption strong{font-size:11px}
+  .kgrid,.lgrid{grid-template-columns:1fr}
+  .rulesCard{padding:18px 16px 12px}
+  .menuFoot{left:0;right:0;text-align:center;font-size:11px}
+  .rulesIcon span{display:none}.rulesIcon{padding:10px}
+}
+@media (max-height:520px) and (orientation:landscape){
+  #startScreen.menu{padding:12px 18px}
+  #menuCharacter{height:100%;width:46vw;left:0}
+  #startScreen.menu h1{font-size:34px;flex-direction:row;gap:10px;margin-bottom:4px}
+  #startScreen.menu h2{margin-bottom:8px;font-size:10px}
+  .menuBadge{display:none}
+  #startScreen #startBtn{padding:8px 16px 6px}#startScreen #startBtn b{font-size:26px}
+  .menuFoot{display:none}
+}
+@media (prefers-reduced-motion:reduce){#startScreen #startBtn,.menuGlow,#startScreen #startBtn kbd{animation:none}}
+@media (pointer:coarse){#startScreen #startBtn small{display:none}}

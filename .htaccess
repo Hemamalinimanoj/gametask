@@ -1,12 +1,15 @@
-# Ashen Roads on Apache / LiteSpeed (Hostinger, cPanel, ...) - blocks private files, serves .glb correctly
-Options -Indexes
+# keep the settings + hidden files private, let index.php be the only door
+<FilesMatch "^(config\.php|config\.sample\.php|\.htaccess)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteRule ^(server|tools|database)(/|$) - [F,L]
-  RewriteRule (^|/)\.env - [F,L]
-  RewriteRule \.(sqlite|key|log)$ - [F,L]
-</IfModule>
-<IfModule mod_mime.c>
-  AddType model/gltf-binary .glb
-  AddType model/gltf+json .gltf
+  # let the Authorization header reach PHP on FastCGI hosts
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 </IfModule>

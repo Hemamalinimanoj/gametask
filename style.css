@@ -1,0 +1,597 @@
+/* start of the Global reset and game canvas */
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body {
+    width:100%; height:100%; overflow:hidden; background:#d9dfdc; font-family: 'Segoe UI', Arial, sans-serif;
+    overscroll-behavior:none; touch-action:none;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+  }
+  canvas { display:block; width:100vw; height:100vh; touch-action:none; }
+  @supports (height: 100dvh) {
+    html, body { height:100dvh; }
+    canvas { height:100dvh; }
+  }
+  .hidden { display:none !important; }
+  /* end of the  Global reset and game canvas */
+  /* start of the Loading screen */
+  #loadingScreen {
+    position:fixed; inset:0; z-index:100000; display:flex; align-items:center; justify-content:center;
+    background:#000; color:#f0f0f0;
+  }
+  #loadingContent { width:min(168px, 48vw); }
+  #loadingTrack { width:100%; height:18px; overflow:hidden; background:#090909; border:1px solid #d8d8d8; }
+  #loadingFill { display:block; width:0; height:100%; background:#f5f5f5; transition:width .12s linear; }
+  #loadingLabel {
+    margin-top:8px; color:#ededed; font:17px/1.1 monospace; text-align:center; white-space:nowrap;
+    letter-spacing:0; text-shadow:none; -webkit-font-smoothing:none; image-rendering:pixelated;
+  }
+  /* end of the Loading screen */
+  /* start of the Start menu and game-over overlay */
+  #startScreen, #gameOverScreen {
+    position:fixed; inset:0; z-index:50;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background: radial-gradient(ellipse at center, rgba(246,247,239,0.97) 0%, rgba(215,224,219,0.98) 100%);
+    color:#283631; text-align:center; padding:20px;
+    pointer-events:auto;
+  }
+  #startScreen h1 {
+    font-size:52px; letter-spacing:6px; color:#b44331; text-shadow:0 2px 14px rgba(79,55,42,0.16);
+    margin-bottom:10px; font-weight:800;
+  }
+  #startScreen h2 { font-weight:400; color:#596761; margin-bottom:28px; letter-spacing:2px; font-size:15px;}
+  .infoBox { max-width:520px; background:rgba(255,255,255,0.56); border:1px solid rgba(45,62,55,0.16); border-radius:8px; padding:18px 22px; margin-bottom:26px; text-align:left; box-shadow:0 12px 32px rgba(49,66,58,0.08); }
+  .infoBox p { margin:6px 0; font-size:14px; color:#3c4943; line-height:1.5; }
+  .infoBox b { color:#87601d; }
+  #startBtn, #restartBtn {
+    background:linear-gradient(180deg,#c94b34,#8f2e1e); color:#fff; border:none; padding:16px 46px;
+    font-size:18px; letter-spacing:2px; border-radius:6px; cursor:pointer; font-weight:700;
+    box-shadow:0 6px 18px rgba(201,75,52,0.35); transition:transform .15s ease;
+  }
+  #startBtn:hover, #restartBtn:hover { transform:translateY(-2px); }
+  #gameOverScreen h1 { font-size:56px; color:#8f0f0f; letter-spacing:8px; margin-bottom:18px; text-shadow:0 0 20px rgba(143,15,15,0.7);}
+  #gameOverStats { font-size:16px; color:#46534d; margin-bottom:30px; line-height:1.8; }
+  #gameOverScreen { background:radial-gradient(ellipse at center,rgba(12,21,24,.82),rgba(4,8,10,.97)); color:#edf1e8; backdrop-filter:blur(7px); }
+  .gameOverCard { width:min(520px,100%); padding:clamp(24px,6vw,48px); border:1px solid rgba(255,195,95,.36); background:linear-gradient(145deg,rgba(26,35,35,.96),rgba(10,15,17,.96)); box-shadow:0 24px 90px rgba(0,0,0,.6),inset 0 1px rgba(255,255,255,.08); }
+  .gameOverEmblem { width:68px;height:68px;margin:0 auto 18px;display:grid;place-items:center;border:1px solid #ffc65d;border-radius:50%;color:#ffc65d;font-size:38px;box-shadow:0 0 30px rgba(255,198,93,.22); }
+  #gameOverKicker { color:#ffc65d;font-size:12px;letter-spacing:5px;font-weight:700;margin-bottom:8px; }
+  #gameOverScreen h1 { color:#ff785d;font-size:clamp(42px,10vw,64px);letter-spacing:7px;margin:0 0 8px;text-shadow:0 0 28px rgba(255,80,54,.36); }
+  #gameOverCaption { color:#b9c3bc;font-size:15px;letter-spacing:1px;margin-bottom:24px; }
+  #gameOverStats { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 26px;color:#e4e9e1;line-height:1.45;text-align:left; }
+  #gameOverStats .resultStat { padding:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1); }
+  #gameOverStats .resultStat b { display:block;color:#aab8ad;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px; }
+  #gameOverStats .resultStat span { font-size:18px;font-weight:700;color:#fff; }
+  #gameOverScreen #restartBtn { background:linear-gradient(135deg,#ffd36b,#e89625);color:#241b0b;border:0;padding:14px 36px;font-size:16px;letter-spacing:3px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(222,144,31,.24); }
+  #gameOverScreen.won .gameOverCard { border-color:rgba(255,207,104,.72);box-shadow:0 24px 90px rgba(0,0,0,.6),0 0 55px rgba(255,190,75,.12),inset 0 1px rgba(255,255,255,.1); }
+  #gameOverScreen.won .gameOverEmblem { background:radial-gradient(circle,rgba(255,210,106,.22),transparent 72%);box-shadow:0 0 42px rgba(255,198,93,.36);animation:survivorPulse 2.2s ease-in-out infinite; }
+  #gameOverScreen.won h1 { color:#ffd36b;text-shadow:0 0 30px rgba(255,190,68,.44); }
+  @keyframes survivorPulse { 50% { transform:scale(1.07); } }
+  @media(max-width:480px) { #gameOverScreen { padding:16px; } .gameOverEmblem { width:56px;height:56px;font-size:32px;margin-bottom:14px; } #gameOverStats .resultStat { padding:9px; } #gameOverStats .resultStat span { font-size:16px; } }
+  /* end of the Start menu and game-over overlay */
+  /* start of the In-game HUD and feedback */
+  #hud { position:fixed; inset:0; pointer-events:none; z-index:10; font-family:'Segoe UI',Arial,sans-serif; }
+  #damageFlash {
+    position:fixed; inset:0; z-index:11; pointer-events:none; opacity:0;
+    background:radial-gradient(ellipse at center, rgba(160,0,0,0) 45%, rgba(160,0,0,0.75) 100%);
+    transition:opacity 0.1s linear;
+  }
+  #crosshair {
+    position:absolute; top:50%; left:50%; width:6px; height:6px; margin:-3px 0 0 -3px;
+    border:2px solid rgba(255,255,255,0.75); border-radius:50%;
+  }
+  #statsPanel { position:absolute; top:calc(18px + env(safe-area-inset-top, 0px)); right:calc(18px + env(safe-area-inset-right, 0px)); display:flex; gap:10px; z-index:5; }
+  .statItem { background:rgba(245,247,240,0.82); border:1px solid rgba(37,52,45,0.2); border-radius:6px; padding:6px 10px; font-size:14px; color:#283631; display:flex; align-items:center; gap:6px; font-family:inherit; box-shadow:0 3px 12px rgba(15,25,20,0.12); }
+  .statItem .icon { font-size:15px; }
+  #topLeftPanel { position:absolute; top:calc(18px + env(safe-area-inset-top, 0px)); left:calc(18px + env(safe-area-inset-left, 0px)); width:260px; }
+  .barLabel { font-size:11px; letter-spacing:1px; color:#f2f4eb; text-transform:uppercase; margin-bottom:3px; display:flex; justify-content:space-between; text-shadow:0 1px 3px rgba(0,0,0,0.72);}
+  .barOuter { width:100%; height:14px; background:rgba(241,245,236,0.76); border:1px solid rgba(38,53,46,0.3); border-radius:3px; overflow:hidden; margin-bottom:10px; }
+  .barInner { height:100%; transition:width .2s ease; }
+  #hpBar { background:linear-gradient(90deg,#8f0f0f,#e2402c); }
+  #hpBar.healing { background:linear-gradient(90deg,#1c8f3a,#6dff8a); box-shadow:0 0 10px rgba(109,255,138,0.8); animation:hpHealPulse 1s ease-in-out infinite; }
+  #hpBar.poisoned { background:linear-gradient(90deg,#3d7a1c,#9be04a); box-shadow:0 0 10px rgba(150,230,60,0.8); }
+  @keyframes hpHealPulse { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.35); } }
+  #stamBar { background:linear-gradient(90deg,#7a8f1a,#c4dc3a); }
+  #inventoryPanel { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .invItem { background:rgba(245,247,240,0.82); border:1px solid rgba(37,52,45,0.2); border-radius:6px; padding:6px 10px; font-size:13px; color:#283631; display:inline-flex; align-items:center; justify-content:center; gap:6px; min-width:52px; box-shadow:0 3px 12px rgba(15,25,20,0.12); }
+  .invItem .icon { font-size:15px; display:inline-flex; align-items:center; justify-content:center; }
+  .invItem span:last-child { min-width:1.2em; text-align:center; }
+  #objectiveBanner {
+    position:absolute; top:20px; left:50%; transform:translateX(-50%);
+    background:rgba(245,247,240,0.86); border:1px solid rgba(37,52,45,0.2); border-radius:6px;
+    padding:9px 22px; color:#283631; font-size:14px; letter-spacing:0.5px; text-align:center; min-width:280px; box-shadow:0 4px 18px rgba(15,25,20,0.12);
+  }
+  #objectiveBanner .label { color:#8b641e; font-weight:700; font-size:10px; letter-spacing:2px; display:block; margin-bottom:2px;}
+  #barkAlert {
+    position:absolute; bottom:26px; left:26px; background:rgba(255,241,234,0.9); border:1px solid rgba(176,66,49,0.42);
+    border-radius:6px; padding:8px 14px; color:#813b2e; font-size:13px; opacity:0; transition:opacity .25s ease;
+  }
+  #barkAlert.show { opacity:1; }
+  #toast {
+    position:absolute; bottom:70px; left:50%; transform:translateX(-50%);
+    background:rgba(249,246,226,0.94); border:1px solid rgba(139,100,30,0.4); color:#735217;
+    padding:8px 18px; border-radius:6px; font-size:13px; opacity:0; transition:opacity .3s ease, transform .3s ease;
+  }
+  #toast.show { opacity:1; }
+  #controlsHint {
+    position:absolute; bottom:18px; right:18px; color:#f0f2e9; font-size:11px; text-align:right; line-height:1.6; text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  }
+  #weaponHint { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#f0f2e9; font-size:11px; letter-spacing:1px; text-shadow:0 1px 3px rgba(0,0,0,0.8);}
+  /* end of the In-game HUD and feedback */
+  /* start of the Touch controls */
+  #touchControls {
+    position:absolute; left:14px; right:14px;
+    bottom:calc(14px + env(safe-area-inset-bottom, 0px)); display:flex !important;
+    justify-content:space-between; align-items:flex-end; pointer-events:none;
+    flex-wrap:wrap; gap:8px;
+  }
+  .touchPad { display:flex; align-items:center; gap:clamp(4px,1.6vw,8px); pointer-events:auto; }
+  #lookPad { align-items:flex-end; gap:clamp(4px,1.4vw,7px); }
+  #actionPad { display:flex; flex-direction:column; align-items:stretch; gap:clamp(4px,1.4vw,7px); pointer-events:auto; }
+  .touchAction {
+    border:1px solid rgba(37,52,45,0.22); background:rgba(245,247,240,0.84); color:#283631;
+    border-radius:12px; font-weight:700; letter-spacing:1px;
+    box-shadow:0 6px 16px rgba(0,0,0,0.3); touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent;
+    flex-shrink:0;
+  }
+   .touchAction { width:clamp(50px,15vw,72px); height:clamp(34px,9vw,44px); font-size:clamp(10px,3vw,13px); }
+  .mobileUtility { display:none; }
+    #joystickZone {
+    position:relative; touch-action:none; -webkit-tap-highlight-color:transparent;
+    width:clamp(96px,30vw,132px); height:clamp(96px,30vw,132px);
+    border-radius:50%; background:rgba(239,244,235,0.48);
+    border:1px solid rgba(245,248,238,0.64); box-shadow:0 6px 16px rgba(0,0,0,0.18);
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  #joystickStick {
+    position:absolute; left:50%; top:50%;
+    width:42%; height:42%; margin-left:-21%; margin-top:-21%;
+    border-radius:50%; background:rgba(190,147,62,0.64); border:1px solid rgba(255,255,255,0.7);
+    pointer-events:none; will-change:transform;
+    transition:background .12s ease;
+  }
+  /* Pushed to (near) the edge of the ring = running, added/removed in JS. */
+  #joystickZone.running {
+    border-color:rgba(232,184,75,0.85); box-shadow:0 6px 16px rgba(0,0,0,0.3), 0 0 14px rgba(232,184,75,0.55);
+  }
+  #joystickZone.running #joystickStick { background:rgba(232,184,75,0.95); }
+  #lookZone {
+    position:relative; touch-action:none; -webkit-tap-highlight-color:transparent;
+    width:clamp(96px,30vw,132px); height:clamp(96px,30vw,132px);
+    border-radius:50%; background:rgba(239,244,235,0.42);
+    border:1px solid rgba(245,248,238,0.58); box-shadow:0 6px 16px rgba(0,0,0,0.18);
+  }
+  #lookStick {
+    position:absolute; left:50%; top:50%; width:42%; height:42%; margin-left:-21%; margin-top:-21%;
+    border-radius:50%; background:rgba(83,145,139,0.65); border:1px solid rgba(255,255,255,0.7);
+    pointer-events:none; will-change:transform;
+  }
+  /* end of the Touch controls */
+  /* start of the Minimap */
+  #minimap {
+    position:absolute; top:calc(18px + env(safe-area-inset-top, 0px)); right:calc(18px + env(safe-area-inset-right, 0px));
+    width:160px; height:160px; border-radius:50%;
+    border:1px solid rgba(246,248,239,0.72);
+    box-shadow:0 4px 18px rgba(0,0,0,0.28);
+  }
+  /* end of the Minimap */
+  /* start of the Pause overlay */
+  #pauseScreen {
+    position:fixed; inset:0; z-index:40; pointer-events:auto; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(226,233,226,0.84); color:#283631; text-align:center; backdrop-filter:blur(5px);
+  }
+  #pauseScreen h1 { font-size:40px; letter-spacing:8px; color:#e8b84b; margin-bottom:12px; }
+  #pauseScreen p { color:#596761; font-size:14px; letter-spacing:1px; }
+  /* end of the Pause overlay */
+  /* start of the Tablet and mobile layout */
+  @media (max-width: 820px) {
+    #startScreen h1 { font-size:38px; letter-spacing:4px; }
+    #startScreen h2 { font-size:12px; letter-spacing:1px; }
+    .infoBox { max-width:92vw; padding:14px 16px; }
+    .infoBox p { font-size:12px; }
+    #startBtn, #restartBtn { padding:14px 28px; font-size:14px; }
+    #topLeftPanel { width:180px; top:calc(12px + env(safe-area-inset-top, 0px)); left:calc(12px + env(safe-area-inset-left, 0px)); }
+    .barLabel { font-size:10px; }
+    .barOuter { height:12px; }
+    .invItem { padding:5px 8px; font-size:11px; }
+    #objectiveBanner { top:calc(12px + env(safe-area-inset-top, 0px)); min-width:180px; max-width:calc(100% - 220px); padding:7px 12px; font-size:12px; }
+    #minimap { width:120px; height:120px; top:calc(12px + env(safe-area-inset-top, 0px)); right:calc(12px + env(safe-area-inset-right, 0px)); }
+    #controlsHint { display:none; }
+    #weaponHint { bottom:92px; }
+    #touchControls { display:flex; }
+    #lookPad { flex-direction:column; }
+    .mobileUtility { display:block; }
+    #barkAlert { left:12px; bottom:110px; }
+  }
+  /* end of the Tablet and mobile layout */
+  /* start of the Small-phone layout */
+  @media (max-width: 560px) {
+    #objectiveBanner { left:50%; transform:translateX(-50%); width:calc(100% - 20px); max-width:none; }
+    #topLeftPanel { width:150px; }
+    #inventoryPanel { gap:8px; }
+    .invItem { padding:4px 6px; }
+    #crosshair { width:4px; height:4px; margin:-2px 0 0 -2px; }
+    #touchControls { left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom, 0px)); }
+  }
+  /* end of the Small-phone layout */
+  /* start of the Damage blood effect */
+  #bloodScreen { position:fixed; inset:0; z-index:12; pointer-events:none; overflow:hidden; }
+  #bloodScreen .bloodSplat {
+    position:absolute; border-radius:46% 54% 50% 50% / 55% 45% 55% 45%;
+    background:radial-gradient(circle at 50% 45%, rgba(150,4,4,0.95) 0%, rgba(120,3,3,0.9) 38%, rgba(90,2,2,0.55) 62%, rgba(90,2,2,0) 74%);
+    opacity:0.95; filter:blur(1.5px);
+    transition:opacity 3.2s ease-out 0.4s, transform 3.6s ease-in;
+  }
+  #bloodScreen .bloodSplat.fade { opacity:0; }
+  /* end of the Damage blood effect */
+
+/* the screen-centre crosshair sits on the player's chest; the red laser reticle out in front of the gun replaces it */
+#crosshair { display:none !important; }
+
+/* Start / game-over screens: scroll when the content is taller than the window (fixes cut-off buttons) */
+#startScreen, #gameOverScreen { justify-content:flex-start; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-top:24px; padding-bottom:40px; }
+#startScreen > :first-child, #gameOverScreen > :first-child { margin-top:auto; }
+#startScreen > :last-child, #gameOverScreen > :last-child { margin-bottom:auto; }
+#startScreen h1 { font-size:44px; margin-bottom:6px; }
+#startScreen h2 { margin-bottom:16px; }
+.infoBox { margin-bottom:18px; padding:14px 20px; max-width:560px; }
+.infoBox p { font-size:13px; margin:4px 0; }
+#onlineBox { padding-bottom:20px; }
+#startBtn { flex-shrink:0; }
+#onlineBtn { color:#fff !important; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px; }
+
+/* ===== v15.3 side-button layout fix ===== */
+/* Action buttons (ATK / SWITCH / MED / PAUSE / THEME / EXIT / CROUCH / RELOAD / ENTER): a compact 2-column grid with a big ATK on top
+   (before: one tall column of 9 buttons that ran off the top of a phone screen and over the minimap). */
+#actionPad { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:clamp(4px,1.2vw,6px); align-items:stretch; }
+#actionPad .touchAction { width:auto; min-width:clamp(54px,16vw,72px); height:clamp(32px,8.5vw,40px); padding:0 6px; font-size:clamp(10px,2.8vw,12px); letter-spacing:.5px; touch-action:manipulation; }
+#actionPad #attackBtn { grid-column:1 / -1; height:clamp(42px,11.5vw,52px); font-size:clamp(12px,3.4vw,15px); background:rgba(214,70,55,.92); color:#fff; border-color:rgba(120,20,12,.5); }
+.touchAction:active { transform:scale(.94); filter:brightness(.92); }
+/* CHAT / MIC (online): same look as the other buttons, moved out of the bottom-right corner (it sat on top of the action buttons) to the right edge just under the minimap */
+#hud #mpBtns { right:calc(12px + env(safe-area-inset-right, 0px)); bottom:auto; top:200px; flex-direction:column; gap:6px; }
+#hud #mpBtns button { min-width:clamp(54px,16vw,72px); height:clamp(32px,8.5vw,40px); padding:0 10px; border-radius:12px; font-size:clamp(10px,2.8vw,12px); white-space:nowrap; border:1px solid rgba(255,255,255,.18); touch-action:manipulation; }
+/* incoming-message popup: centred under the top HUD instead of covering the minimap / side buttons */
+#hud #msgPopup { top:38%; left:50%; right:auto; transform:translateX(-50%); width:max-content; }
+@media (max-width: 820px) {
+  #hud #mpBtns { top:150px; }
+  #lookPad { gap:6px; }
+}
+/* phones held sideways: little height -> action buttons sit in a row beside the look stick instead of stacked above it */
+@media (max-height: 520px) and (orientation: landscape) {
+  #lookPad { flex-direction:row !important; align-items:flex-end; }
+  #actionPad { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  #actionPad #attackBtn { grid-column:auto; }
+  #actionPad .touchAction { height:clamp(30px,10vh,38px); min-width:54px; }
+  #joystickZone, #lookZone { width:clamp(84px,26vh,112px); height:clamp(84px,26vh,112px); }
+  #hud #mpBtns { top:140px; }
+}
+/* ===== end v15.3 ===== */
+
+/* ===== v15.12 round icon button cluster (like the reference HUD) ===== */
+#actionPad { --u: clamp(40px, min(11.5vh, 10vw), 66px); position:fixed; right:calc(12px + env(safe-area-inset-right,0px)); bottom:calc(12px + env(safe-area-inset-bottom,0px)); width:calc(var(--u)*4.9); height:calc(var(--u)*4.7); display:block !important; z-index:8; pointer-events:none; }
+#lookPad { margin-right:calc(clamp(40px, min(11.5vh, 10vw), 66px)*4.9); }
+#actionPad .touchAction.icoBtn { position:absolute; display:flex !important; flex-direction:column; align-items:center; justify-content:center; padding:0; min-width:0; grid-column:auto; pointer-events:auto;
+  width:calc(var(--u)*1.1); height:calc(var(--u)*1.1); border-radius:50%; color:#f2f2f2;
+  background:radial-gradient(circle at 50% 40%, rgba(40,40,44,.82), rgba(8,8,10,.86)); border:2px solid rgba(240,240,240,.88);
+  box-shadow:0 0 0 2px rgba(0,0,0,.45), inset 0 0 0 2px rgba(0,0,0,.35), 0 6px 14px rgba(0,0,0,.5); touch-action:none; letter-spacing:0; }
+#actionPad .icoBtn svg { width:62%; height:62%; display:block; pointer-events:none; filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+#actionPad .icoBtn .ico-lbl { position:absolute; bottom:-2px; font:700 clamp(6px,1.5vh,8px)/1 sans-serif; color:#e8b84b; text-shadow:0 1px 2px #000; pointer-events:none; }
+#actionPad .icoBtn:active { transform:scale(.92); background:radial-gradient(circle at 50% 40%, rgba(120,30,25,.9), rgba(30,6,6,.92)); filter:none; }
+#actionPad #attackBtn { width:calc(var(--u)*2.1); height:calc(var(--u)*2.1); right:0; bottom:0; border-width:3px; background:radial-gradient(circle at 50% 40%, rgba(55,55,60,.82), rgba(10,10,12,.88)); }
+#actionPad #attackBtn svg { width:66%; height:66%; }
+#actionPad #reloadBtn { width:calc(var(--u)*1.25); height:calc(var(--u)*1.25); right:calc(var(--u)*.4); bottom:calc(var(--u)*2.35); }
+#actionPad #switchBtn { right:calc(var(--u)*2.05); bottom:calc(var(--u)*1.85); }
+#actionPad #medkitBtn { right:calc(var(--u)*2.4); bottom:0; }
+#actionPad #crouchBtn { right:calc(var(--u)*3.75); bottom:calc(var(--u)*.35); }
+#actionPad #vehBtn { right:calc(var(--u)*3.4); bottom:calc(var(--u)*1.85); }
+#actionPad #pauseBtn, #actionPad #themeBtn, #actionPad #exitBtn { width:calc(var(--u)*.8); height:calc(var(--u)*.8); bottom:calc(var(--u)*3.85); }
+#actionPad #pauseBtn { right:calc(var(--u)*.45); }
+#actionPad #themeBtn { right:calc(var(--u)*1.4); }
+#actionPad #exitBtn { right:calc(var(--u)*2.35); }
+#actionPad #pauseBtn.mobileUtility, #actionPad #themeBtn.mobileUtility, #actionPad #exitBtn.mobileUtility { display:none !important; }
+@media (max-width: 820px) { #actionPad #pauseBtn.mobileUtility, #actionPad #themeBtn.mobileUtility, #actionPad #exitBtn.mobileUtility { display:flex !important; } }
+/* desktop: round touch buttons not needed unless touch controls are shown */
+/* ===== end v15.12 ===== */
+
+/* ===== v15.15 big map overlay ===== */
+#minimap { pointer-events:auto; cursor:pointer; touch-action:manipulation; }
+#bigMap { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:30; pointer-events:none; background:rgba(0,0,0,.35); }
+#bigMap.open { display:flex; }
+#bigMapPanel { position:relative; pointer-events:auto; width:min(78vh, 92vw); height:min(78vh, 92vw); border-radius:14px; overflow:hidden; border:2px solid rgba(240,240,240,.85); box-shadow:0 10px 40px rgba(0,0,0,.7); background:#121416; }
+#bigMapCanvas { width:100%; height:100%; display:block; touch-action:none; }
+#bigMapClose { position:absolute; top:8px; right:8px; width:34px; height:34px; border-radius:50%; border:2px solid rgba(240,240,240,.85); background:rgba(10,10,12,.85); color:#fff; font:700 16px sans-serif; cursor:pointer; z-index:2; }
+#bigMapList { position:absolute; left:8px; top:8px; max-width:55%; padding:6px 9px; border-radius:10px; background:rgba(8,10,12,.78); color:#e8e8e8; font:600 12px/1.5 sans-serif; pointer-events:none; }
+#bigMapList b { color:#ffd36a; letter-spacing:1px; }
+#bigMapList i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; border:1px solid #fff; }
+#bigMapList span { color:#9ab; margin-left:4px; }
+#bigMapList .mpNone { color:#9ab; font-weight:500; }
+/* ===== end v15.15 ===== */
+
+/* ===== v15.15b ammo guide + medkit badge ===== */
+#ammoGuide { position:absolute; left:50%; top:calc(86px + env(safe-area-inset-top,0px)); transform:translateX(-50%); display:none; align-items:center; gap:8px; padding:6px 14px; border-radius:20px; background:rgba(10,10,12,.78); border:2px solid #e0b040; color:#ffd36a; font:700 13px sans-serif; letter-spacing:.5px; pointer-events:none; z-index:7; }
+#ammoGuide.show { display:flex; animation:agPulse 1s ease-in-out infinite; }
+#ammoGuideArrow { display:inline-block; font-size:20px; line-height:1; color:#ffc94a; transition:transform .1s linear; }
+@keyframes agPulse { 50% { box-shadow:0 0 14px rgba(224,176,64,.7); } }
+#actionPad .icoBtn .ico-badge { position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px; border-radius:9px; background:#d63b2f; color:#fff; font:700 11px/17px sans-serif; text-align:center; border:1px solid #fff; pointer-events:none; }
+
+/* ===== v15.15c stamina states ===== */
+#stamBar { transition:width .08s linear, background .2s; }
+#stamBar.low { background:linear-gradient(90deg,#c26a12,#f0a030); }
+#stamBar.exhausted { background:linear-gradient(90deg,#8e1b14,#e0443a); animation:stamBlink .5s steps(2) infinite; }
+@keyframes stamBlink { 50% { opacity:.45; } }
+
+/* ===== v15.17 mobile layout clean-up (touch phones) ===== */
+:root { --u: clamp(40px, min(11.5vh, 10vw), 66px); --hudBottom: 0px; }
+#touchControls { bottom: calc(14px + var(--hudBottom) + env(safe-area-inset-bottom, 0px)) !important; }
+#actionPad { bottom: calc(12px + var(--hudBottom) + env(safe-area-inset-bottom, 0px)) !important; }
+#weaponSlots { position:fixed; right:calc(12px + env(safe-area-inset-right,0px)); bottom:calc(var(--hudBottom) + 12px + var(--u)*4.95 + env(safe-area-inset-bottom,0px)); display:none; flex-direction:row-reverse; gap:8px; z-index:8; pointer-events:none; }
+.wslot { pointer-events:auto; position:relative; width:calc(var(--u)*0.95); height:calc(var(--u)*0.95); border-radius:50%; padding:0; display:flex; align-items:center; justify-content:center; color:#d8d8d8;
+  background:radial-gradient(circle at 50% 40%, rgba(40,40,44,.82), rgba(8,8,10,.86)); border:2px solid rgba(240,240,240,.55); box-shadow:0 5px 12px rgba(0,0,0,.5); touch-action:none; }
+.wslot svg { width:58%; height:58%; pointer-events:none; }
+.wslot .wlbl { position:absolute; bottom:-3px; right:-3px; min-width:16px; padding:0 4px; border-radius:8px; background:rgba(0,0,0,.85); color:#ffd36a; font:700 10px/16px sans-serif; text-align:center; pointer-events:none; }
+.wslot .wlbl:empty { display:none; }
+.wslot.active { color:#ffd36a; border-color:#e8b84b; box-shadow:0 0 0 2px rgba(232,184,75,.35), 0 0 14px rgba(232,184,75,.75); }
+#hud:not(.hidden) #weaponSlots { display:flex; }
+#actionPad #vehBtn svg, #actionPad #themeBtn svg { width:46%; height:46%; margin-top:-10%; }
+#actionPad .icoBtn .ico-lbl { bottom:11%; }
+@media (pointer: coarse), (max-width: 820px) {
+  #weaponHint { display:none; }
+  #topLeftPanel { top:calc(12px + env(safe-area-inset-top,0px)); }
+  #objectiveBanner { top:calc(176px + env(safe-area-inset-top,0px)); width:calc(100% - 24px); max-width:none; min-width:0; padding:4px 10px; font-size:11px; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #objectiveBanner .label { display:inline; margin:0 6px 0 0; }
+  #statsPanel { top:calc(138px + env(safe-area-inset-top,0px)); right:calc(12px + env(safe-area-inset-right,0px)); }
+  #hud #zoneInfo { top:calc(212px + env(safe-area-inset-top,0px)) !important; font-size:12px !important; padding:3px 10px !important; }
+  #toast { bottom:auto; top:calc(246px + env(safe-area-inset-top,0px)); max-width:calc(100% - 24px); text-align:center; }
+  #barkAlert { bottom:auto; top:calc(290px + env(safe-area-inset-top,0px)); left:12px; right:12px; text-align:center; }
+  #hud #chatLog { bottom:auto !important; top:calc(334px + env(safe-area-inset-top,0px)); }
+}
+/* portrait phone: move stick at the very bottom-left, look stick right above it (they used to be cut off at the bottom) */
+@media (orientation: portrait) and (max-width: 820px) {
+  #touchControls { flex-direction:column; flex-wrap:nowrap; align-items:flex-start; justify-content:flex-end; gap:12px; }
+  #movePad { order:2; }
+  #lookPad { order:1; margin-right:0; }
+  #ammoGuide { top:calc(250px + env(safe-area-inset-top,0px)); }
+}
+@media (pointer: coarse), (max-width: 820px) { #hud #mpBtns { top:calc(214px + env(safe-area-inset-top,0px)) !important; } }
+
+/* ===== v15.21 RUN / AIM buttons + landscape phone layout + rotate hint ===== */
+#sideBtns { position:fixed; left:calc(14px + env(safe-area-inset-left,0px)); bottom:calc(clamp(84px,26vh,112px) + 26px + env(safe-area-inset-bottom,0px)); display:none; gap:10px; z-index:8; pointer-events:none; }
+@media (pointer: coarse), (max-width: 820px) { #hud:not(.hidden) #sideBtns { display:flex; } }
+#sideBtns button { pointer-events:auto; touch-action:none; min-width:52px; height:46px; padding:0 12px; border-radius:23px; border:2px solid rgba(240,240,240,.88); color:#f2f2f2; font:800 12px/1.05 sans-serif; letter-spacing:.6px; text-align:center;
+  background:radial-gradient(circle at 50% 40%, rgba(40,40,44,.82), rgba(8,8,10,.86)); box-shadow:0 0 0 2px rgba(0,0,0,.45), 0 6px 14px rgba(0,0,0,.5); }
+#sideBtns button small { display:block; font:700 9px/1.2 sans-serif; color:#9aa; letter-spacing:.8px; }
+#sideBtns button.on { border-color:#e8b84b; color:#ffd36a; box-shadow:0 0 0 2px rgba(232,184,75,.35), 0 0 14px rgba(232,184,75,.75); }
+#sideBtns button.on small { color:#ffd36a; }
+#sideBtns #aimBtn small { color:#7fe08a; }
+#sideBtns #aimBtn.manual { border-color:#6fb3ff; } #sideBtns #aimBtn.manual small { color:#8cc4ff; }
+#sideBtns button:active { transform:scale(.93); }
+#rotateHint { position:fixed; inset:0; z-index:200000; display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:rgba(5,7,10,.97); color:#fff; text-align:center; font-family:sans-serif; padding:24px; }
+#rotateHint.show { display:flex; }
+#rotateHint .rh-ph { width:56px; height:92px; border:4px solid #e8b84b; border-radius:12px; animation:rhTurn 2.4s ease-in-out infinite; }
+@keyframes rhTurn { 0%,15% { transform:rotate(0); } 60%,100% { transform:rotate(-90deg); } }
+#rotateHint .rh-t { font-size:22px; font-weight:800; letter-spacing:1px; } #rotateHint .rh-s { font-size:13px; color:#9ab; max-width:280px; }
+#rotateHint button { margin-top:6px; padding:10px 20px; border-radius:20px; border:2px solid #e8b84b; background:transparent; color:#ffd36a; font:700 13px sans-serif; letter-spacing:1px; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #topLeftPanel { width:150px; top:calc(6px + env(safe-area-inset-top,0px)); left:calc(8px + env(safe-area-inset-left,0px)); }
+  #topLeftPanel .barLabel { font-size:10px; }
+  #minimap { width:88px !important; height:88px !important; top:calc(6px + env(safe-area-inset-top,0px)); right:calc(8px + env(safe-area-inset-right,0px)); }
+  #statsPanel { top:calc(100px + env(safe-area-inset-top,0px)); right:calc(10px + env(safe-area-inset-right,0px)); }
+  #objectiveBanner { top:calc(6px + env(safe-area-inset-top,0px)); left:50%; transform:translateX(-50%); width:auto; max-width:calc(100% - 340px); padding:3px 10px; font-size:10px; }
+  #hud #zoneInfo { top:calc(34px + env(safe-area-inset-top,0px)) !important; font-size:11px !important; padding:2px 8px !important; }
+  #toast { top:calc(62px + env(safe-area-inset-top,0px)); font-size:12px; }
+  #barkAlert { top:calc(90px + env(safe-area-inset-top,0px)); left:50%; right:auto; transform:translateX(-50%); width:max-content; max-width:60%; font-size:11px; }
+  #ammoGuide { top:calc(60px + env(safe-area-inset-top,0px)); }
+  #hud #chatLog { top:calc(130px + env(safe-area-inset-top,0px)) !important; max-width:34%; font-size:11px; }
+  #hud #mpBtns { top:calc(6px + env(safe-area-inset-top,0px)) !important; right:calc(104px + env(safe-area-inset-right,0px)); flex-direction:row; }
+  #weaponHint { display:none; }
+  #sideBtns { bottom:calc(clamp(84px,26vh,112px) + 22px + env(safe-area-inset-bottom,0px)); }
+}
+/* ===== end v15.21 ===== */
+
+/* ===== v15.22 mobile fixes: icons, multiplayer login, chat/mic buttons ===== */
+.statItem .icon svg, .invItem .icon svg { width:1.1em; height:1.1em; display:block; }
+.statItem .icon, .invItem .icon { display:inline-flex; align-items:center; justify-content:center; line-height:1; }
+/* start screen / multiplayer login: usable on small phones (scrolls, big tap targets, no iOS zoom) */
+#startScreen { overscroll-behavior:contain; }
+#onlineBox input, #onlineBox button { font-size:16px; min-height:44px; box-sizing:border-box; touch-action:manipulation; }
+#onlineBox input { max-width:320px; }
+@media (max-height:520px) and (orientation:landscape) {
+  #startScreen h1 { font-size:28px; } #startScreen h2 { margin-bottom:8px; font-size:11px; }
+  .infoBox { padding:8px 12px; max-width:92vw; } .infoBox p { font-size:11px; margin:2px 0; }
+  #onlineBox { gap:6px; } #onlineBox input, #onlineBox button { min-height:38px; }
+}
+/* CHAT / MIC: icon-only on landscape phones so they no longer overlap the objective banner */
+#mpBtns button .mi { font-size:15px; line-height:1; vertical-align:middle; }
+@media (orientation:landscape) and (max-height:520px) {
+  #hud #mpBtns button { min-width:38px; width:38px; height:34px; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  #hud #mpBtns button .ml { display:none; }
+  #objectiveBanner { max-width:calc(100% - 420px); }
+}
+/* ===== end v15.22 ===== */
+
+/* ===== v15.24 switch icon always tappable ===== */
+#actionPad .touchAction.icoBtn, .wslot { z-index:9; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; cursor:pointer; }
+#actionPad #switchBtn { pointer-events:auto !important; }
+.wslot { pointer-events:auto !important; }
+
+/* ===== v15.32 phone buttons: easier to hit, easier to read ===== */
+@media (pointer: coarse), (max-width: 820px) {
+  /* invisible extra touch area around every round button (the picture stays the same size) */
+  #actionPad .touchAction.icoBtn::before, .wslot::before { content:''; position:absolute; inset:-5px; border-radius:50%; }
+  #sideBtns button::before { content:''; position:absolute; inset:-6px; border-radius:26px; }
+  #sideBtns button { position:relative; min-width:60px; height:50px; }
+  /* labels under the icons are readable now (were 6-8 px) */
+  #actionPad .icoBtn .ico-lbl { font:800 clamp(8px,2.3vh,10px)/1 sans-serif; letter-spacing:.3px; color:#ffd36a; }
+  .wslot .wlbl { font:800 11px/17px sans-serif; min-width:18px; }
+  /* thumb never hides the icon picture: clear pressed state + gold ring on the weapon in hand */
+  #actionPad .icoBtn:active { box-shadow:0 0 0 3px rgba(232,184,75,.55), 0 4px 10px rgba(0,0,0,.5); }
+  #actionPad #attackBtn { box-shadow:0 0 0 3px rgba(220,60,50,.45), inset 0 0 0 2px rgba(0,0,0,.35), 0 8px 18px rgba(0,0,0,.55); }
+  /* the buttons are a little see-through so the game stays visible behind them, full strength on touch */
+  #actionPad .icoBtn, .wslot, #sideBtns button { opacity:.9; }
+  #actionPad .icoBtn:active, .wslot:active, #sideBtns button:active { opacity:1; }
+  /* no accidental zoom / text selection / long-press menu on the controls */
+  #touchControls, #actionPad, #weaponSlots, #sideBtns { touch-action:none; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+}
+/* ===== end v15.32 ===== */
+
+/* ===== v15.35 phone buttons: colour coded + bullets count on the ATK button ===== */
+#actionPad .icoBtn .ico-badge.ammoBadge { top:auto; right:auto; bottom:7%; left:50%; transform:translateX(-50%); min-width:26px; height:18px; padding:0 6px; border-radius:9px; background:#ffd36a; color:#111; border:1px solid #000; font:800 12px/18px sans-serif; }
+#actionPad .icoBtn .ico-badge.ammoBadge.low { background:#e8392e; color:#fff; animation:ammoLow .8s ease-in-out infinite; }
+@keyframes ammoLow { 50% { transform:translateX(-50%) scale(1.18); } }
+@media (pointer: coarse), (max-width: 820px) {
+  /* every button has its own ring colour, so you know it without reading it: red = shoot, green = heal, blue = switch weapon, amber = reload */
+  #actionPad #attackBtn { border-color:#ff6a5a; }
+  #actionPad #medkitBtn { border-color:#58e08a; }
+  #actionPad #switchBtn { border-color:#6fb3ff; }
+  #actionPad #reloadBtn { border-color:#ffc247; }
+  #actionPad #crouchBtn { border-color:#c9c9d2; }
+  #actionPad #vehBtn { border-color:#b38cff; }
+}
+/* portrait phones have lots of free height: bigger buttons there (the cluster still fits the width) */
+@media (orientation: portrait) and (pointer: coarse) {
+  :root { --u: clamp(48px, 13.5vw, 70px); }
+}
+/* ===== end v15.35 ===== */
+
+/* Compact the right-hand icon cluster on short landscape phone screens. */
+@media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  :root { --u: clamp(32px, min(9vh, 8vw), 48px); }
+  #actionPad {
+    --u:clamp(32px, min(9vh, 8vw), 48px);
+    width:calc(var(--u)*4.35);
+    height:calc(var(--u)*4.15);
+  }
+  #lookPad { margin-right:calc(var(--u)*4.35); }
+  #actionPad .touchAction.icoBtn { width:calc(var(--u)*.96); height:calc(var(--u)*.96); }
+  #actionPad #attackBtn { width:calc(var(--u)*1.8); height:calc(var(--u)*1.8); }
+  #actionPad #reloadBtn { width:calc(var(--u)*1.05); height:calc(var(--u)*1.05); right:calc(var(--u)*.35); bottom:calc(var(--u)*2.1); }
+  #actionPad #switchBtn { right:calc(var(--u)*1.8); bottom:calc(var(--u)*1.55); }
+  #actionPad #medkitBtn { right:calc(var(--u)*2.05); bottom:0; }
+  #actionPad #crouchBtn { right:calc(var(--u)*3.25); bottom:calc(var(--u)*.25); }
+  #actionPad #vehBtn { right:calc(var(--u)*2.95); bottom:calc(var(--u)*1.55); }
+  #actionPad #pauseBtn, #actionPad #themeBtn, #actionPad #exitBtn {
+    width:calc(var(--u)*.68);
+    height:calc(var(--u)*.68);
+    bottom:calc(var(--u)*3.4);
+  }
+  #actionPad #pauseBtn { right:calc(var(--u)*.4); }
+  #actionPad #themeBtn { right:calc(var(--u)*1.2); }
+  #actionPad #exitBtn { right:calc(var(--u)*2); }
+}
+
+  /* ===== v15.42: VICTORY SCREEN ===== */
+  #winConfetti { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; display:none; z-index:0; }
+  #gameOverScreen.won #winConfetti { display:block; }
+  .gameOverCard { position:relative; z-index:1; overflow:hidden; }
+  .winRays { display:none; }
+  #gameOverScreen.won .winRays { display:block; position:absolute; left:50%; top:-60px; width:560px; height:560px; margin-left:-280px; z-index:-1; opacity:.55;
+    background:repeating-conic-gradient(from 0deg, rgba(255,205,100,.34) 0 7deg, rgba(255,205,100,0) 7deg 20deg);
+    -webkit-mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 38%,transparent 70%); mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 38%,transparent 70%); animation:winSpin 24s linear infinite; }
+  @keyframes winSpin { to { transform:rotate(360deg); } }
+  #gameOverScreen.won .gameOverCard { border-color:#ffd36b; background:linear-gradient(160deg,rgba(40,33,18,.97),rgba(14,15,12,.97)); animation:winPop .7s cubic-bezier(.2,1.4,.4,1) both; box-shadow:0 24px 90px rgba(0,0,0,.65),0 0 80px rgba(255,190,75,.22),inset 0 1px rgba(255,255,255,.14); }
+  @keyframes winPop { from { transform:scale(.8) translateY(20px); opacity:0; } to { transform:none; opacity:1; } }
+  #gameOverScreen.won .gameOverEmblem { width:96px; height:96px; border-width:2px; border-color:#ffd36b; background:radial-gradient(circle,rgba(255,210,106,.35),rgba(255,210,106,.04) 70%); }
+  #gameOverScreen.won .gameOverEmblem svg { width:58px; height:58px; fill:#ffd36b; filter:drop-shadow(0 0 10px rgba(255,200,90,.7)); }
+  #gameOverScreen.won #gameOverKicker { color:#ffe7a8; letter-spacing:7px; }
+  #gameOverScreen.won h1 { font-size:clamp(46px,12vw,74px); letter-spacing:9px; background:linear-gradient(180deg,#fff3c4 0%,#ffd36b 45%,#e8921f 100%); -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent; text-shadow:none; filter:drop-shadow(0 0 22px rgba(255,185,60,.5)); }
+  #gameOverRank { display:flex; align-items:center; justify-content:center; gap:14px; margin:0 0 22px; }
+  #gameOverRank.hidden { display:none; }
+  #gameOverRank .rkBadge { width:58px; height:58px; display:grid; place-items:center; font-size:34px; font-weight:900; color:#241b0b; background:linear-gradient(145deg,#fff0b3,#e8921f); clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); filter:drop-shadow(0 0 12px rgba(255,190,70,.6)); }
+  #gameOverRank .rkTxt { text-align:left; color:#e9e1c8; font-size:12px; letter-spacing:3px; text-transform:uppercase; line-height:1.6; }
+  #gameOverRank .rkTxt b { display:block; color:#ffd36b; font-size:17px; letter-spacing:4px; }
+  #gameOverScreen.won #gameOverStats .resultStat { background:linear-gradient(160deg,rgba(255,211,107,.12),rgba(255,255,255,.03)); border-color:rgba(255,211,107,.3); animation:winStat .6s ease-out both; }
+  #gameOverScreen.won #gameOverStats .resultStat:nth-child(1){animation-delay:.35s} #gameOverScreen.won #gameOverStats .resultStat:nth-child(2){animation-delay:.5s}
+  #gameOverScreen.won #gameOverStats .resultStat:nth-child(3){animation-delay:.65s} #gameOverScreen.won #gameOverStats .resultStat:nth-child(4){animation-delay:.8s}
+  @keyframes winStat { from { transform:translateY(14px); opacity:0; } to { transform:none; opacity:1; } }
+  #gameOverScreen.won #gameOverStats .resultStat span { color:#ffe7a8; font-size:22px; }
+  #gameOverScreen.won #restartBtn { animation:winBtn 1.8s ease-in-out infinite 1.4s; }
+  @keyframes winBtn { 0%,100% { box-shadow:0 8px 24px rgba(222,144,31,.3); } 50% { box-shadow:0 8px 40px rgba(255,190,60,.75); } }
+
+/* =====================================================================================================================
+   v15.53 - (1) WIN / GAME-OVER SCREEN no longer cut on phones   (2) phone HUD icons arranged cleanly
+   ===================================================================================================================== */
+
+/* ---------- (1) win / game over card -------------------------------------------------------------------------------
+   BUG: the card was a shrinkable flex child of the fixed screen, so on a short phone screen (landscape) it was squeezed to the
+   window height and its overflow:hidden CUT OFF the rank, the stats and the PLAY AGAIN button.
+   FIX: the card keeps its full height (flex:none), is centred, the screen scrolls if still needed, and on short / landscape
+   screens the card becomes a compact 2-column layout that fits without scrolling. */
+#gameOverScreen { touch-action:pan-y; overscroll-behavior:contain;
+  padding-left:max(12px, env(safe-area-inset-left,0px)); padding-right:max(12px, env(safe-area-inset-right,0px));
+  padding-top:max(16px, env(safe-area-inset-top,0px)); padding-bottom:max(24px, env(safe-area-inset-bottom,0px)); }
+#gameOverScreen .gameOverCard { flex:0 0 auto; margin:auto; max-width:100%; }
+#gameOverScreen #restartBtn { touch-action:manipulation; }
+
+/* short portrait phones */
+@media (orientation:portrait) and (max-height:700px) {
+  #gameOverScreen { padding-top:max(10px, env(safe-area-inset-top,0px)); padding-bottom:max(14px, env(safe-area-inset-bottom,0px)); }
+  #gameOverScreen .gameOverCard { padding:18px 16px; }
+  #gameOverScreen .gameOverEmblem, #gameOverScreen.won .gameOverEmblem { width:68px; height:68px; margin-bottom:10px; }
+  #gameOverScreen.won .gameOverEmblem svg { width:60%; height:60%; }
+  #gameOverScreen h1, #gameOverScreen.won h1 { font-size:clamp(38px,11vw,54px); letter-spacing:6px; }
+  #gameOverCaption { margin-bottom:12px; }
+  #gameOverRank { margin-bottom:12px; }
+  #gameOverStats { gap:8px; margin-bottom:14px; }
+}
+
+/* phones held sideways (and any short window): compact two-column card, everything visible at once */
+@media (max-height:520px) and (orientation:landscape) {
+  #gameOverScreen { padding-top:max(8px, env(safe-area-inset-top,0px)); padding-bottom:max(8px, env(safe-area-inset-bottom,0px)); }
+  #gameOverScreen .gameOverCard { width:min(780px,100%); padding:clamp(10px,3.2vh,20px) clamp(14px,3vw,28px);
+    display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); column-gap:clamp(12px,3vw,28px); align-items:center; text-align:center; }
+  #gameOverScreen .gameOverEmblem, #gameOverScreen.won .gameOverEmblem { grid-column:1; grid-row:1; width:clamp(38px,13vh,54px); height:clamp(38px,13vh,54px); margin:0 auto 4px; font-size:clamp(22px,7vh,30px); }
+  #gameOverScreen.won .gameOverEmblem svg { width:60%; height:60%; }
+  #gameOverKicker, #gameOverScreen.won #gameOverKicker { grid-column:1; grid-row:2; margin:0 0 2px; font-size:10px; letter-spacing:4px; }
+  #gameOverScreen h1, #gameOverScreen.won h1 { grid-column:1; grid-row:3; margin:0 0 2px; font-size:clamp(28px,10vh,46px); letter-spacing:5px; line-height:1.05; }
+  #gameOverCaption { grid-column:1; grid-row:4; margin:0 0 6px; font-size:12px; letter-spacing:.5px; }
+  #gameOverRank { grid-column:1; grid-row:5; margin:0; gap:10px; }
+  #gameOverRank .rkBadge { width:40px; height:40px; font-size:24px; }
+  #gameOverRank .rkTxt { font-size:10px; letter-spacing:2px; line-height:1.4; }
+  #gameOverRank .rkTxt b { font-size:14px; letter-spacing:3px; }
+  #gameOverStats { grid-column:2; grid-row:1 / span 4; margin:0; gap:8px; align-self:center; }
+  #gameOverStats .resultStat, #gameOverScreen.won #gameOverStats .resultStat { padding:7px 9px; }
+  #gameOverStats .resultStat b { font-size:9px; letter-spacing:1.5px; margin-bottom:2px; }
+  #gameOverStats .resultStat span, #gameOverScreen.won #gameOverStats .resultStat span { font-size:16px; }
+  #gameOverScreen #restartBtn { grid-column:2; grid-row:5; width:100%; margin-top:10px; padding:11px 16px; font-size:14px; letter-spacing:2px; align-self:center; }
+}
+
+/* ---------- (2) phone HUD: round icons arranged cleanly ------------------------------------------------------------------
+   - ONE size unit (--u) for the whole HUD (before, the button cluster and the weapon row used different units, so the weapon
+     row floated far above the cluster in portrait),
+   - every round button has a clear gap to its neighbours (before some touched / overlapped),
+   - PAUSE / THEME / EXIT show on every phone (they were hidden on wide landscape phones > 820px),
+   - the keyboard hint text is hidden on touch screens,
+   - RUN / AIM no longer sit on top of the look stick in portrait. */
+@media (pointer:coarse), (max-width:820px) {
+  :root { --hu: clamp(44px, min(13vw, 11.5vh), 64px); }
+  :root, #actionPad { --u: var(--hu); }
+  #controlsHint { display:none !important; }
+  #actionPad { width:calc(var(--u)*4.6); height:calc(var(--u)*4.4); }
+  #actionPad .touchAction.icoBtn { width:calc(var(--u)*1.05); height:calc(var(--u)*1.05); }
+  #actionPad #attackBtn { width:calc(var(--u)*1.95); height:calc(var(--u)*1.95); right:0; bottom:0; }
+  #actionPad #reloadBtn { right:calc(var(--u)*.45);  bottom:calc(var(--u)*2.2); }
+  #actionPad #switchBtn { right:calc(var(--u)*2.1);  bottom:calc(var(--u)*1.45); }
+  #actionPad #medkitBtn { right:calc(var(--u)*2.1);  bottom:calc(var(--u)*.1); }
+  #actionPad #crouchBtn { right:calc(var(--u)*3.4);  bottom:calc(var(--u)*.1); }
+  #actionPad #vehBtn    { right:calc(var(--u)*3.4);  bottom:calc(var(--u)*1.45); }
+  #actionPad #pauseBtn.mobileUtility, #actionPad #themeBtn.mobileUtility, #actionPad #exitBtn.mobileUtility { display:flex !important; width:calc(var(--u)*.78); height:calc(var(--u)*.78); bottom:calc(var(--u)*3.55); }
+  #actionPad #pauseBtn { right:calc(var(--u)*.45); }
+  #actionPad #themeBtn { right:calc(var(--u)*1.4); }
+  #actionPad #exitBtn  { right:calc(var(--u)*2.35); }
+  #weaponSlots { gap:calc(var(--u)*.18); bottom:calc(var(--hudBottom) + 12px + var(--u)*4.55 + env(safe-area-inset-bottom,0px)); }
+  .wslot { width:calc(var(--u)*1); height:calc(var(--u)*1); }
+}
+/* phone held sideways: smaller unit (height is the limit); the stick next to the buttons keeps clear of them */
+@media (orientation:landscape) and (max-height:520px) and (pointer:coarse), (orientation:landscape) and (max-height:520px) and (max-width:820px) {
+  :root { --hu: clamp(30px, 10.5vh, 48px); }
+  #lookPad { margin-right:calc(var(--u)*4.75); }
+  #minimap { width:84px !important; height:84px !important; }
+  #statsPanel { top:calc(94px + env(safe-area-inset-top,0px)); }
+}
+@media (orientation:landscape) and (max-height:340px) {
+  :root { --hu: clamp(28px, 9.5vh, 48px); }
+}
+/* portrait: RUN / AIM sit above the look stick (they used to cover it) */
+@media (orientation:portrait) and (max-width:820px) {
+  #sideBtns { bottom:calc(14px + var(--hudBottom) + clamp(96px,30vw,132px)*2 + 24px + env(safe-area-inset-bottom,0px)); }
+  #sideBtns { gap:8px; } #sideBtns button { min-width:54px; padding:0 8px; }
+}
+/* ===== end v15.53 ===== */
